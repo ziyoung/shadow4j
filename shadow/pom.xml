@@ -11,13 +11,6 @@
 
     <artifactId>shadow</artifactId>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.google.crypto.tink</groupId>
-            <artifactId>tink</artifactId>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>

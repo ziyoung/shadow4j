@@ -1,33 +1,43 @@
 package net.ziyoung.shadow;
 
-import com.google.crypto.tink.Aead;
-import com.google.crypto.tink.KeyTemplate;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.aead.AeadConfig;
-import com.google.crypto.tink.aead.AesGcmKeyManager;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.security.GeneralSecurityException;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.Key;
 
 @Slf4j
-@AllArgsConstructor
 public class MetaCipher implements ShadowCipher {
 
-    static {
-        try {
-            AeadConfig.register();
-        } catch (GeneralSecurityException e) {
-            log.error("register error", e);
-            throw new RuntimeException("AeadConfig register failure");
+    private final byte[] psk;
+    private final byte[] iv;
+    private Key key;
+    private Cipher cipher;
+
+    public MetaCipher(byte[] psk, byte[] iv, String cipherName) throws Exception {
+        if (!("aes".equals(cipherName) || "chacha".equals(cipherName))) {
+            throw new IllegalArgumentException("invalid cipher name");
         }
+        this.psk = psk;
+        this.iv = iv;
+        this.init(cipherName);
     }
 
-//    private static byte[] hkdfSha1(byte[] secret,byte[] salt, byte[] info) {
-//
-//    }
-
-    private final byte[] psk;
+    private void init(String cipherName) throws Exception {
+        if ("aes".equals(cipherName)) {
+            switch (keySize()) {
+                case 16: // aes-128-gcm
+                case 24: // aes-192-gcm
+                case 32: // aes-256-gcm
+                    break;
+                default:
+                    throw new IllegalArgumentException("invalid key");
+            }
+            key = new SecretKeySpec(psk, "AES");
+            cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        }
+    }
 
     @Override
     public int keySize() {
@@ -40,15 +50,17 @@ public class MetaCipher implements ShadowCipher {
     }
 
     @Override
-    public Aead encrypter(byte[] salt) throws GeneralSecurityException {
-        KeyTemplate keyTemplate = AesGcmKeyManager.aes128GcmTemplate();
-        KeysetHandle handle = KeysetHandle.generateNew(keyTemplate);
-        return handle.getPrimitive(Aead.class);
+    public byte[] encrypt(byte[] plaintext, byte[] iv) throws Exception {
+        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, iv);
+        cipher.init(Cipher.ENCRYPT_MODE, key, gcmParameterSpec);
+        return cipher.doFinal(plaintext);
     }
 
     @Override
-    public Aead decrypter(byte[] salt) {
-        return null;
+    public byte[] decrypt(byte[] ciphertext, byte[] iv) throws Exception {
+        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, iv);
+        cipher.init(Cipher.DECRYPT_MODE, key, gcmParameterSpec);
+        return cipher.doFinal(ciphertext);
     }
 
 }
