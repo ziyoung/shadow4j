@@ -9,23 +9,22 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Hkdf {
 
-    public static byte[] hkdfSha1(byte[] ikm, byte[] salt, byte[] info) throws Exception {
-        return computeHkdf("HMACSHA1", ikm, salt, info);
+    public static byte[] hkdfSha1(byte[] ikm, byte[] salt, byte[] info, int size) throws Exception {
+        return computeHkdf("HmacSHA1", ikm, salt, info, size);
     }
 
-    public static byte[] hkdfSha256(byte[] ikm, byte[] salt, byte[] info) throws Exception {
-        return computeHkdf("HmacSha256", ikm, salt, info);
+    public static byte[] hkdfSha256(byte[] ikm, byte[] salt, byte[] info, int size) throws Exception {
+        return computeHkdf("HmacSHA256", ikm, salt, info, size);
     }
 
     // ikm: input keying material
-    private static byte[] computeHkdf(String macAlgorithm, byte[] ikm, byte[] salt, byte[] info) throws Exception {
+    private static byte[] computeHkdf(String macAlgorithm, byte[] ikm, byte[] salt, byte[] info, int size) throws Exception {
         Mac mac = Mac.getInstance(macAlgorithm);
         if (salt == null || salt.length == 0) {
             mac.init(new SecretKeySpec(new byte[mac.getMacLength()], macAlgorithm));
         } else {
             mac.init(new SecretKeySpec(salt, macAlgorithm));
         }
-        int size = mac.getMacLength();
         byte[] prk = mac.doFinal(ikm); // pseudorandom key
         byte[] result = new byte[size];
         int ctr = 1;

@@ -6,6 +6,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -16,9 +17,10 @@ import java.security.spec.AlgorithmParameterSpec;
 @Slf4j
 public class MetaCipher implements ShadowCipher {
 
+    private static final byte[] hkdfInfo = "ss-subkey".getBytes(StandardCharsets.UTF_8);
+
     private final byte[] psk;
     private final String cipherName;
-    private Key key;
 
     public MetaCipher(byte[] psk, String cipherName) {
         if (!("aes".equals(cipherName) || "chacha20".equals(cipherName))) {
@@ -39,23 +41,27 @@ public class MetaCipher implements ShadowCipher {
                 default:
                     throw new IllegalArgumentException("invalid aes key");
             }
-            key = new SecretKeySpec(psk, "AES");
         } else {
             if (keySize() != 32) {
                 throw new IllegalArgumentException("invalid chacha20 key");
             }
-            key = new SecretKeySpec(psk, "ChaCha20");
         }
     }
 
-    private AlgorithmParameterSpec ivSpec(byte[] iv) {
+    private Key subKey(byte[] salt) throws Exception {
+        byte[] key = Hkdf.hkdfSha1(psk, salt, hkdfInfo, keySize());
+        String algorithm = isAes() ? "AES" : "ChaCha20";
+        return new SecretKeySpec(key, algorithm);
+    }
+
+    private AlgorithmParameterSpec parameterSpec(byte[] iv) {
         return isAes() ? new GCMParameterSpec(128, iv) : new IvParameterSpec(iv);
     }
 
-    private Cipher cipherInstance(int mode, AlgorithmParameterSpec parameterSpec) throws Exception {
+    private Cipher cipherInstance(int mode, Key key, AlgorithmParameterSpec parameters) throws Exception {
         String transformation = isAes() ? "AES/GCM/NoPadding" : "ChaCha20-Poly1305/None/NoPadding";
         Cipher cipher = Cipher.getInstance(transformation);
-        cipher.init(mode, key, parameterSpec);
+        cipher.init(mode, key, parameters);
         return cipher;
     }
 
@@ -74,14 +80,16 @@ public class MetaCipher implements ShadowCipher {
     }
 
     @Override
-    public byte[] encrypt(byte[] plaintext, byte[] iv) throws Exception {
-        Cipher cipher = cipherInstance(Cipher.ENCRYPT_MODE, ivSpec(iv));
+    public byte[] encrypt(byte[] salt, byte[] nonce, byte[] plaintext) throws Exception {
+        Key key = subKey(salt);
+        Cipher cipher = cipherInstance(Cipher.ENCRYPT_MODE, key, parameterSpec(nonce));
         return cipher.doFinal(plaintext);
     }
 
     @Override
-    public byte[] decrypt(byte[] ciphertext, byte[] iv) throws Exception {
-        Cipher cipher = cipherInstance(Cipher.DECRYPT_MODE, ivSpec(iv));
+    public byte[] decrypt(byte[] salt, byte[] nonce, byte[] ciphertext) throws Exception {
+        Key key = subKey(salt);
+        Cipher cipher = cipherInstance(Cipher.DECRYPT_MODE, key, parameterSpec(nonce));
         return cipher.doFinal(ciphertext);
     }
 
