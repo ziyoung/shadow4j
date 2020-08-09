@@ -1,13 +1,40 @@
 package net.ziyoung.shadow;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.MessageDigest;
+
 
 /**
- * https://github.com/google/tink/blob/eafd9283b1d1da1dfc08c5297c101cd4b2d530c5/java_src/src/main/java/com/google/crypto/tink/subtle/Hkdf.java#L29
+ * key derivation util
+ * hfkd reference: https://github.com/google/tink/blob/eafd9283b1d1da1dfc08c5297c101cd4b2d530c5/java_src/src/main/java/com/google/crypto/tink/subtle/Hkdf.java#L29
  */
+@Slf4j
+public class KdUtil {
 
-public class Hkdf {
+    public static byte[] computeKdf(byte[] ikm, int size) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        byte[] result = new byte[size];
+        byte[] digest = new byte[0];
+        int pos = 0;
+        while (true) {
+            md.update(digest);
+            md.update(ikm);
+            digest = md.digest();
+            int l = digest.length;
+            md.reset();
+            if (pos + l < size) {
+                System.arraycopy(digest, 0, result, pos, l);
+                pos += digest.length;
+            } else {
+                System.arraycopy(digest, 0, result, pos, size - pos);
+                break;
+            }
+        }
+        return result;
+    }
 
     public static byte[] hkdfSha1(byte[] ikm, byte[] salt, byte[] info, int size) throws Exception {
         return computeHkdf("HmacSHA1", ikm, salt, info, size);

@@ -1,5 +1,6 @@
 package net.ziyoung.shadow;
 
+import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,17 @@ public class CipherTests {
         byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(salt, nonce, plaintext));
         byte[] decrypttext = Assertions.assertDoesNotThrow(() -> cipher.decrypt(salt, nonce, ciphertext));
         Assertions.assertArrayEquals(plaintext, decrypttext);
+    }
+
+    @Test
+    @DisplayName("test kdf")
+    void testKdf() {
+        // see https://play.golang.org/p/jSirI1lXWiW
+        String hexString = "26091960993f19de456d340a7d0482a892e91a230364e1b85a8fb6a2e7666f5b";
+        int size = 32;
+        byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.computeKdf(password, 32));
+        Assertions.assertEquals(size, key.length);
+        Assertions.assertEquals(hexString, Hex.encodeHexString(key));
     }
 
     private byte[] genSalt(ShadowCipher cipher) {

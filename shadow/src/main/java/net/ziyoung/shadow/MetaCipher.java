@@ -49,7 +49,7 @@ public class MetaCipher implements ShadowCipher {
     }
 
     private Key subKey(byte[] salt) throws Exception {
-        byte[] key = Hkdf.hkdfSha1(psk, salt, hkdfInfo, keySize());
+        byte[] key = KdUtil.hkdfSha1(psk, salt, hkdfInfo, keySize());
         String algorithm = isAes() ? "AES" : "ChaCha20";
         return new SecretKeySpec(key, algorithm);
     }
