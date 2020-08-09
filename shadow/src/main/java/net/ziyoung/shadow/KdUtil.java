@@ -9,7 +9,6 @@ import java.security.MessageDigest;
 
 /**
  * key derivation util
- * hfkd reference: https://github.com/google/tink/blob/eafd9283b1d1da1dfc08c5297c101cd4b2d530c5/java_src/src/main/java/com/google/crypto/tink/subtle/Hkdf.java#L29
  */
 @Slf4j
 public class KdUtil {
@@ -44,7 +43,7 @@ public class KdUtil {
         return computeHkdf("HmacSHA256", ikm, salt, info, size);
     }
 
-    // ikm: input keying material
+    // reference https://github.com/google/tink/blob/eafd9283b1d1da1dfc08c5297c101cd4b2d530c5/java_src/src/main/java/com/google/crypto/tink/subtle/Hkdf.java#L29
     private static byte[] computeHkdf(String macAlgorithm, byte[] ikm, byte[] salt, byte[] info, int size) throws Exception {
         Mac mac = Mac.getInstance(macAlgorithm);
         if (salt == null || salt.length == 0) {
