@@ -6,8 +6,8 @@ public interface ShadowCipher {
 
     int saltSize();
 
-    byte[] encrypt(byte[] plaintext, byte[] iv) throws Exception;
+    byte[] encrypt(byte[] salt, byte[] nonce, byte[] plaintext) throws Exception;
 
-    byte[] decrypt(byte[] ciphertext, byte[] iv) throws Exception;
+    byte[] decrypt(byte[] salt, byte[] nonce, byte[] ciphertext) throws Exception;
 
 }
