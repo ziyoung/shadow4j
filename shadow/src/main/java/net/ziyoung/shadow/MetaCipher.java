@@ -1,7 +1,5 @@
 package net.ziyoung.shadow;
 
-import lombok.extern.slf4j.Slf4j;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
@@ -14,7 +12,6 @@ import java.security.spec.AlgorithmParameterSpec;
  * cipher names: https://docs.oracle.com/en/java/javase/14/docs/specs/security/standard-names.html
  */
 
-@Slf4j
 public class MetaCipher implements ShadowCipher {
 
     private static final byte[] hkdfInfo = "ss-subkey".getBytes(StandardCharsets.UTF_8);
