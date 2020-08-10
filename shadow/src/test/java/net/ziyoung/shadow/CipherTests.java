@@ -1,6 +1,5 @@
 package net.ziyoung.shadow;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -9,12 +8,10 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-@Slf4j
 public class CipherTests {
 
     private static final byte[] password = "change this password to a secret".getBytes(StandardCharsets.UTF_8);
     private static final byte[] plaintext = "example plaintext".getBytes(StandardCharsets.UTF_8);
-    private static final byte[] nonce = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     private static final byte[] salt = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
     @Test
@@ -32,9 +29,13 @@ public class CipherTests {
             String result = results[i];
             byte[] pwd = Arrays.copyOf(password, size);
             ShadowCipher cipher = new MetaCipher(pwd, "aes");
-            byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(salt, nonce, plaintext));
+
+            Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(salt));
+            byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(plaintext));
             Assertions.assertEquals(result, Hex.encodeHexString(ciphertext));
-            byte[] decrypttext = Assertions.assertDoesNotThrow(() -> cipher.decrypt(salt, nonce, ciphertext));
+
+            Assertions.assertDoesNotThrow(() -> cipher.initDecrypt(salt));
+            byte[] decrypttext = Assertions.assertDoesNotThrow(() -> cipher.decrypt(ciphertext));
             Assertions.assertArrayEquals(plaintext, decrypttext);
         }
     }
@@ -43,11 +44,11 @@ public class CipherTests {
     @DisplayName("test kdf")
     void testKdf() {
         // see https://play.golang.org/p/jSirI1lXWiW
-        String hexString = "26091960993f19de456d340a7d0482a892e91a230364e1b85a8fb6a2e7666f5b";
+        String result = "26091960993f19de456d340a7d0482a892e91a230364e1b85a8fb6a2e7666f5b";
         int size = 32;
         byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.computeKdf(password, 32));
         Assertions.assertEquals(size, key.length);
-        Assertions.assertEquals(hexString, Hex.encodeHexString(key));
+        Assertions.assertEquals(result, Hex.encodeHexString(key));
     }
 
 }
