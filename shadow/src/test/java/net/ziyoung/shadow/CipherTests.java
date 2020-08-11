@@ -29,15 +29,17 @@ public class CipherTests {
             String result = results[i];
             byte[] pwd = Arrays.copyOf(password, size);
             ShadowCipher cipher = new MetaCipher(pwd, "aes");
-
-            Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(salt));
-            byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(plaintext));
-            Assertions.assertEquals(result, Hex.encodeHexString(ciphertext));
-
-            Assertions.assertDoesNotThrow(() -> cipher.initDecrypt(salt));
-            byte[] decrypttext = Assertions.assertDoesNotThrow(() -> cipher.decrypt(ciphertext));
-            Assertions.assertArrayEquals(plaintext, decrypttext);
+            encryptAndDecrypt(cipher, result);
         }
+    }
+
+    @Test
+    @DisplayName("test chacha20-poly1035")
+    void testChacha20() {
+        // https://play.golang.org/p/u9ORp0dSo8y
+        String result = "5310756ef93fbd0641102f25f6ab83d59587441a2439b4aa4eef475fe8f6512277";
+        ShadowCipher cipher = new MetaCipher(password, "chacha20");
+        encryptAndDecrypt(cipher, result);
     }
 
     @Test
@@ -49,6 +51,16 @@ public class CipherTests {
         byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.computeKdf(password, 32));
         Assertions.assertEquals(size, key.length);
         Assertions.assertEquals(result, Hex.encodeHexString(key));
+    }
+
+    private void encryptAndDecrypt(ShadowCipher cipher, String result) {
+        Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(salt));
+        byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(plaintext));
+        Assertions.assertEquals(result, Hex.encodeHexString(ciphertext));
+
+        Assertions.assertDoesNotThrow(() -> cipher.initDecrypt(salt));
+        byte[] decrypttext = Assertions.assertDoesNotThrow(() -> cipher.decrypt(ciphertext));
+        Assertions.assertArrayEquals(plaintext, decrypttext);
     }
 
 }

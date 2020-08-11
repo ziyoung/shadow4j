@@ -62,7 +62,8 @@ public class MetaCipher implements ShadowCipher {
     }
 
     private Cipher cipherInstance(int mode, Key key, AlgorithmParameterSpec parameters) throws Exception {
-        if (curCipher == null) {
+        // for chacha20-poly1305, can't use previous cipher
+        if (curCipher == null || !isAes()) {
             String transformation = isAes() ? "AES/GCM/NoPadding" : "ChaCha20-Poly1305/None/NoPadding";
             curCipher = Cipher.getInstance(transformation);
         }
@@ -95,8 +96,10 @@ public class MetaCipher implements ShadowCipher {
 
     @Override
     public void initEncrypt(byte[] salt) throws Exception {
-        mode = Cipher.ENCRYPT_MODE;
-        nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        if (mode != Cipher.ENCRYPT_MODE) {
+            mode = Cipher.ENCRYPT_MODE;
+            nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        }
         curCipher = cipherInstance(mode, subKey(salt), parameterSpec(nonce));
     }
 
@@ -111,8 +114,10 @@ public class MetaCipher implements ShadowCipher {
 
     @Override
     public void initDecrypt(byte[] salt) throws Exception {
-        mode = Cipher.DECRYPT_MODE;
-        nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        if (mode != Cipher.DECRYPT_MODE) {
+            mode = Cipher.DECRYPT_MODE;
+            nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        }
         curCipher = cipherInstance(mode, subKey(salt), parameterSpec(nonce));
     }
 
