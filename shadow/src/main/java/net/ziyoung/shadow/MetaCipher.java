@@ -15,6 +15,7 @@ import java.util.Arrays;
 public class MetaCipher implements ShadowCipher {
 
     public static final int TAG_SIZE = 16;
+    public static final int LENGTH_SIZE = 2;
     private static final byte[] HKDF_INFO = "ss-subkey".getBytes(StandardCharsets.UTF_8);
     private static final byte[] DEFAULT_NONCE = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class CipherTests {
+public class CipherTest {
 
     private static final byte[] password = "change this password to a secret".getBytes(StandardCharsets.UTF_8);
     private static final byte[] plaintext = "example plaintext".getBytes(StandardCharsets.UTF_8);
