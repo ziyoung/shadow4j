@@ -103,6 +103,7 @@ public class MetaCipher implements ShadowCipher {
             mode = Cipher.ENCRYPT_MODE;
             nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
         }
+        this.salt = salt;
         curCipher = cipherInstance(parameterSpec(nonce));
     }
 
@@ -122,6 +123,7 @@ public class MetaCipher implements ShadowCipher {
             mode = Cipher.DECRYPT_MODE;
             nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
         }
+        this.salt = salt;
         curCipher = cipherInstance(parameterSpec(nonce));
     }
 
