@@ -2,10 +2,9 @@ package net.ziyoung.shadow;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToByteEncoder;
 
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
 public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
@@ -15,8 +14,7 @@ public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
     private boolean cipherInit = false;
 
     public ShadowStreamEncoder(ShadowConfig config) {
-        byte[] psk = config.getCipherName().getBytes(StandardCharsets.UTF_8);
-        this.cipher = new MetaCipher(psk, config.getCipherName());
+        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName());
         this.salt = new byte[cipher.saltSize()];
     }
 
@@ -34,10 +32,10 @@ public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
         byte[] data = shadowStream.getData();
         int size = data == null ? 0 : data.length;
         if (size == 0 || size > ShadowStream.MAX_LENGTH) {
-            throw new DecoderException("fail to decode: invalid data size " + size);
+            throw new EncoderException("fail to decode: invalid data size " + size);
         }
         byteBuf.writeBytes(salt);
-        byte[] lengthBytes = new byte[]{(byte) ((short) size >> 8), (byte) size};
+        byte[] lengthBytes = new byte[]{(byte) (size >> 8), (byte) size};
         byteBuf.writeBytes(cipher.decrypt(lengthBytes));
         byteBuf.writeBytes(cipher.decrypt(data));
     }

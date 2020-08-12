@@ -6,6 +6,6 @@ import lombok.Data;
 public class ShadowConfig {
 
     private final String cipherName;
-    private final String password;
+    private final byte[] password;
 
 }

@@ -22,6 +22,7 @@ public class MetaCipher implements ShadowCipher {
     private final byte[] psk;
     private final String cipherName;
     private byte[] nonce;
+    private byte[] salt;
     private int mode = -1;
     private Cipher curCipher;
 
@@ -62,13 +63,13 @@ public class MetaCipher implements ShadowCipher {
         return isAes() ? new GCMParameterSpec(TAG_SIZE * 8, iv) : new IvParameterSpec(iv);
     }
 
-    private Cipher cipherInstance(int mode, Key key, AlgorithmParameterSpec parameters) throws Exception {
+    private Cipher cipherInstance(AlgorithmParameterSpec parameters) throws Exception {
         // for chacha20-poly1305, can't use previous cipher
         if (curCipher == null || !isAes()) {
             String transformation = isAes() ? "AES/GCM/NoPadding" : "ChaCha20-Poly1305/None/NoPadding";
             curCipher = Cipher.getInstance(transformation);
         }
-        curCipher.init(mode, key, parameters);
+        curCipher.init(mode, subKey(salt), parameters);
         return curCipher;
     }
 
@@ -76,13 +77,14 @@ public class MetaCipher implements ShadowCipher {
         return "aes".equals(cipherName);
     }
 
-    public void increaseNonce() {
+    public void updateNonceAndCipher() throws Exception {
         for (int i = 0; i < nonce.length; i++) {
             nonce[i]++;
             if (nonce[i] != 0) {
-                return;
+                break;
             }
         }
+        curCipher = cipherInstance(parameterSpec(nonce));
     }
 
     @Override
@@ -101,7 +103,7 @@ public class MetaCipher implements ShadowCipher {
             mode = Cipher.ENCRYPT_MODE;
             nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
         }
-        curCipher = cipherInstance(mode, subKey(salt), parameterSpec(nonce));
+        curCipher = cipherInstance(parameterSpec(nonce));
     }
 
     @Override
@@ -109,8 +111,9 @@ public class MetaCipher implements ShadowCipher {
         if (mode != Cipher.ENCRYPT_MODE) {
             throw new IllegalStateException("invalid mode " + mode);
         }
-        increaseNonce();
-        return curCipher.doFinal(plaintext);
+        byte[] bytes = curCipher.doFinal(plaintext);
+        updateNonceAndCipher();
+        return bytes;
     }
 
     @Override
@@ -119,7 +122,7 @@ public class MetaCipher implements ShadowCipher {
             mode = Cipher.DECRYPT_MODE;
             nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
         }
-        curCipher = cipherInstance(mode, subKey(salt), parameterSpec(nonce));
+        curCipher = cipherInstance(parameterSpec(nonce));
     }
 
     @Override
@@ -127,8 +130,9 @@ public class MetaCipher implements ShadowCipher {
         if (mode != Cipher.DECRYPT_MODE) {
             throw new IllegalStateException("invalid mode " + mode);
         }
-        increaseNonce();
-        return curCipher.doFinal(ciphertext);
+        byte[] bytes = curCipher.doFinal(ciphertext);
+        updateNonceAndCipher();
+        return bytes;
     }
 
 }

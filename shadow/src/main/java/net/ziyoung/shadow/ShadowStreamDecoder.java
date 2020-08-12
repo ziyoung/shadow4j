@@ -5,7 +5,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.ReplayingDecoder;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 enum State {
@@ -20,8 +19,8 @@ public class ShadowStreamDecoder extends ReplayingDecoder<State> {
     private int length;
 
     public ShadowStreamDecoder(ShadowConfig config) {
-        byte[] psk = config.getCipherName().getBytes(StandardCharsets.UTF_8);
-        this.cipher = new MetaCipher(psk, config.getCipherName());
+        super(State.READ_SALT);
+        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName());
     }
 
     @Override
@@ -39,7 +38,7 @@ public class ShadowStreamDecoder extends ReplayingDecoder<State> {
                 bytes = new byte[MetaCipher.LENGTH_SIZE + MetaCipher.TAG_SIZE];
                 byteBuf.readBytes(bytes);
                 plaintext = cipher.decrypt(bytes);
-                length = Integer.parseUnsignedInt(new String(plaintext));
+                length = ((plaintext[0] << 8) + Byte.toUnsignedInt(plaintext[1])) & ShadowStream.MAX_LENGTH;
                 checkpoint(State.READ_PAYLOAD);
                 break;
             case READ_PAYLOAD:
@@ -47,6 +46,7 @@ public class ShadowStreamDecoder extends ReplayingDecoder<State> {
                 byteBuf.readBytes(bytes);
                 plaintext = cipher.decrypt(bytes);
                 list.add(new ShadowStream(plaintext));
+                break;
             default:
                 throw new DecoderException("unreachable branch");
         }
