@@ -20,12 +20,12 @@ public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
 
     private void init() throws Exception {
         new SecureRandom().nextBytes(salt);
-        cipher.initDecrypt(salt);
+        cipher.initEncrypt(salt);
     }
 
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, ShadowStream shadowStream, ByteBuf byteBuf) throws Exception {
-        if (cipherInit) {
+        if (!cipherInit) {
             init();
             cipherInit = true;
         }
@@ -36,8 +36,8 @@ public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
         }
         byteBuf.writeBytes(salt);
         byte[] lengthBytes = new byte[]{(byte) (size >> 8), (byte) size};
-        byteBuf.writeBytes(cipher.decrypt(lengthBytes));
-        byteBuf.writeBytes(cipher.decrypt(data));
+        byteBuf.writeBytes(cipher.encrypt(lengthBytes));
+        byteBuf.writeBytes(cipher.encrypt(data));
     }
 
 }
