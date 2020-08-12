@@ -1,7 +1,5 @@
 package net.ziyoung.shadow;
 
-import lombok.extern.slf4j.Slf4j;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
@@ -10,7 +8,6 @@ import java.security.MessageDigest;
 /**
  * key derivation util
  */
-@Slf4j
 public class KdUtil {
 
     public static byte[] computeKdf(byte[] ikm, int size) throws Exception {

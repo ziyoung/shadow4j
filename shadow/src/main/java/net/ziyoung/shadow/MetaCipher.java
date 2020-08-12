@@ -1,7 +1,5 @@
 package net.ziyoung.shadow;
 
-import lombok.extern.slf4j.Slf4j;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
@@ -9,18 +7,24 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 
 /***
  * cipher names: https://docs.oracle.com/en/java/javase/14/docs/specs/security/standard-names.html
  */
-
-@Slf4j
 public class MetaCipher implements ShadowCipher {
 
-    private static final byte[] hkdfInfo = "ss-subkey".getBytes(StandardCharsets.UTF_8);
+    public static final int TAG_SIZE = 16;
+    public static final int LENGTH_SIZE = 2;
+    private static final byte[] HKDF_INFO = "ss-subkey".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] DEFAULT_NONCE = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     private final byte[] psk;
     private final String cipherName;
+    private byte[] nonce;
+    private byte[] salt;
+    private int mode = -1;
+    private Cipher curCipher;
 
     public MetaCipher(byte[] psk, String cipherName) {
         if (!("aes".equals(cipherName) || "chacha20".equals(cipherName))) {
@@ -28,10 +32,11 @@ public class MetaCipher implements ShadowCipher {
         }
         this.psk = psk;
         this.cipherName = cipherName;
-        this.init();
+        this.nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        this.validateKey();
     }
 
-    private void init() {
+    private void validateKey() {
         if (isAes()) {
             switch (keySize()) {
                 case 16: // aes-128-gcm
@@ -49,24 +54,37 @@ public class MetaCipher implements ShadowCipher {
     }
 
     private Key subKey(byte[] salt) throws Exception {
-        byte[] key = KdUtil.hkdfSha1(psk, salt, hkdfInfo, keySize());
+        byte[] key = KdUtil.hkdfSha1(psk, salt, HKDF_INFO, keySize());
         String algorithm = isAes() ? "AES" : "ChaCha20";
         return new SecretKeySpec(key, algorithm);
     }
 
     private AlgorithmParameterSpec parameterSpec(byte[] iv) {
-        return isAes() ? new GCMParameterSpec(128, iv) : new IvParameterSpec(iv);
+        return isAes() ? new GCMParameterSpec(TAG_SIZE * 8, iv) : new IvParameterSpec(iv);
     }
 
-    private Cipher cipherInstance(int mode, Key key, AlgorithmParameterSpec parameters) throws Exception {
-        String transformation = isAes() ? "AES/GCM/NoPadding" : "ChaCha20-Poly1305/None/NoPadding";
-        Cipher cipher = Cipher.getInstance(transformation);
-        cipher.init(mode, key, parameters);
-        return cipher;
+    private Cipher cipherInstance(AlgorithmParameterSpec parameters) throws Exception {
+        // for chacha20-poly1305, can't use previous cipher
+        if (curCipher == null || !isAes()) {
+            String transformation = isAes() ? "AES/GCM/NoPadding" : "ChaCha20-Poly1305/None/NoPadding";
+            curCipher = Cipher.getInstance(transformation);
+        }
+        curCipher.init(mode, subKey(salt), parameters);
+        return curCipher;
     }
 
     private boolean isAes() {
         return "aes".equals(cipherName);
+    }
+
+    public void updateNonceAndCipher() throws Exception {
+        for (int i = 0; i < nonce.length; i++) {
+            nonce[i]++;
+            if (nonce[i] != 0) {
+                break;
+            }
+        }
+        curCipher = cipherInstance(parameterSpec(nonce));
     }
 
     @Override
@@ -80,17 +98,41 @@ public class MetaCipher implements ShadowCipher {
     }
 
     @Override
-    public byte[] encrypt(byte[] salt, byte[] nonce, byte[] plaintext) throws Exception {
-        Key key = subKey(salt);
-        Cipher cipher = cipherInstance(Cipher.ENCRYPT_MODE, key, parameterSpec(nonce));
-        return cipher.doFinal(plaintext);
+    public void initEncrypt(byte[] salt) throws Exception {
+        if (mode != Cipher.ENCRYPT_MODE) {
+            mode = Cipher.ENCRYPT_MODE;
+            nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        }
+        curCipher = cipherInstance(parameterSpec(nonce));
     }
 
     @Override
-    public byte[] decrypt(byte[] salt, byte[] nonce, byte[] ciphertext) throws Exception {
-        Key key = subKey(salt);
-        Cipher cipher = cipherInstance(Cipher.DECRYPT_MODE, key, parameterSpec(nonce));
-        return cipher.doFinal(ciphertext);
+    public byte[] encrypt(byte[] plaintext) throws Exception {
+        if (mode != Cipher.ENCRYPT_MODE) {
+            throw new IllegalStateException("invalid mode " + mode);
+        }
+        byte[] bytes = curCipher.doFinal(plaintext);
+        updateNonceAndCipher();
+        return bytes;
+    }
+
+    @Override
+    public void initDecrypt(byte[] salt) throws Exception {
+        if (mode != Cipher.DECRYPT_MODE) {
+            mode = Cipher.DECRYPT_MODE;
+            nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        }
+        curCipher = cipherInstance(parameterSpec(nonce));
+    }
+
+    @Override
+    public byte[] decrypt(byte[] ciphertext) throws Exception {
+        if (mode != Cipher.DECRYPT_MODE) {
+            throw new IllegalStateException("invalid mode " + mode);
+        }
+        byte[] bytes = curCipher.doFinal(ciphertext);
+        updateNonceAndCipher();
+        return bytes;
     }
 
 }
