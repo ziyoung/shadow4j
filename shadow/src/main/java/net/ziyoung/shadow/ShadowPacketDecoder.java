@@ -7,39 +7,30 @@ import io.netty.handler.codec.ReplayingDecoder;
 
 import java.util.List;
 
-public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.State> {
+public class ShadowPacketDecoder extends ReplayingDecoder<ShadowPacketDecoder.State> {
 
     private final ShadowCipher cipher;
-    private int length;
 
-    public ShadowStreamDecoder(ShadowConfig config) {
+    public ShadowPacketDecoder(ShadowConfig config) {
         super(State.READ_SALT);
-        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName());
+        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName(), false);
     }
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) throws Exception {
-        byte[] bytes;
-        byte[] plaintext;
         switch (state()) {
             case READ_SALT:
                 byte[] salt = new byte[cipher.saltSize()];
                 byteBuf.readBytes(salt);
                 cipher.initDecrypt(salt);
-                checkpoint(State.READ_LENGTH);
-                break;
-            case READ_LENGTH:
-                bytes = new byte[MetaCipher.LENGTH_SIZE + MetaCipher.TAG_SIZE];
-                byteBuf.readBytes(bytes);
-                plaintext = cipher.decrypt(bytes);
-                length = ((plaintext[0] << 8) + Byte.toUnsignedInt(plaintext[1])) & ShadowStream.MAX_PAYLOAD_LENGTH;
                 checkpoint(State.READ_PAYLOAD);
                 break;
             case READ_PAYLOAD:
-                bytes = new byte[length + MetaCipher.TAG_SIZE];
+                // we are using ReplayingDecoderByteBuf rather than ByteBuf, do not use byteBuf.readableBytes()
+                byte[] bytes = new byte[byteBuf.writerIndex() - byteBuf.readerIndex()];
                 byteBuf.readBytes(bytes);
-                plaintext = cipher.decrypt(bytes);
-                list.add(new ShadowStream(plaintext));
+                byte[] plaintext = cipher.decrypt(bytes);
+                list.add(new ShadowPacket(plaintext));
                 break;
             default:
                 throw new DecoderException("unreachable branch");
@@ -48,7 +39,6 @@ public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.St
 
     enum State {
         READ_SALT,
-        READ_LENGTH,
         READ_PAYLOAD
     }
 
