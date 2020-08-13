@@ -53,6 +53,17 @@ public class CipherTest {
         Assertions.assertEquals(result, Hex.encodeHexString(key));
     }
 
+    @Test
+    @DisplayName("test hkdf sha1")
+    void testHkdfSha1() {
+        // https://play.golang.org/p/fxVIOlEs_an
+        String result = "65a1621f4f54730f90bc5338f108b5d910279319b1abbf190d162483834401c7";
+        byte[] info = "ss-subkey".getBytes(StandardCharsets.UTF_8);
+        byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.hkdfSha1(password, salt, info, password.length));
+        Assertions.assertEquals(password.length, key.length);
+        Assertions.assertEquals(result, Hex.encodeHexString(key));
+    }
+
     private void encryptAndDecrypt(ShadowCipher cipher, String result) {
         Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(salt));
         byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(plaintext));

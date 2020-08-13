@@ -21,7 +21,9 @@ public class MetaCipher implements ShadowCipher {
 
     private final byte[] psk;
     private final String cipherName;
-    private byte[] nonce;
+    private final byte[] nonce;
+    private boolean increaseNonce = true;
+
     private byte[] salt;
     private int mode = -1;
     private Cipher curCipher;
@@ -34,6 +36,11 @@ public class MetaCipher implements ShadowCipher {
         this.cipherName = cipherName;
         this.nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
         this.validateKey();
+    }
+
+    public MetaCipher(byte[] psk, String cipherName, boolean increaseNonce) {
+        this(psk, cipherName);
+        this.increaseNonce = false;
     }
 
     private void validateKey() {
@@ -101,7 +108,7 @@ public class MetaCipher implements ShadowCipher {
     public void initEncrypt(byte[] salt) throws Exception {
         if (mode != Cipher.ENCRYPT_MODE) {
             mode = Cipher.ENCRYPT_MODE;
-            nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+            System.arraycopy(DEFAULT_NONCE, 0, nonce, 0, nonce.length);
         }
         this.salt = salt;
         curCipher = cipherInstance(parameterSpec(nonce));
@@ -113,7 +120,9 @@ public class MetaCipher implements ShadowCipher {
             throw new IllegalStateException("invalid mode " + mode);
         }
         byte[] bytes = curCipher.doFinal(plaintext);
-        updateNonceAndCipher();
+        if (increaseNonce) {
+            updateNonceAndCipher();
+        }
         return bytes;
     }
 
@@ -121,7 +130,7 @@ public class MetaCipher implements ShadowCipher {
     public void initDecrypt(byte[] salt) throws Exception {
         if (mode != Cipher.DECRYPT_MODE) {
             mode = Cipher.DECRYPT_MODE;
-            nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+            System.arraycopy(DEFAULT_NONCE, 0, nonce, 0, nonce.length);
         }
         this.salt = salt;
         curCipher = cipherInstance(parameterSpec(nonce));
@@ -133,7 +142,9 @@ public class MetaCipher implements ShadowCipher {
             throw new IllegalStateException("invalid mode " + mode);
         }
         byte[] bytes = curCipher.doFinal(ciphertext);
-        updateNonceAndCipher();
+        if (increaseNonce) {
+            updateNonceAndCipher();
+        }
         return bytes;
     }
 
