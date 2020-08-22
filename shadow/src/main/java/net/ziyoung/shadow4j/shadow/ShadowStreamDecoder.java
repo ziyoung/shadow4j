@@ -1,4 +1,4 @@
-package net.ziyoung.shadow;
+package net.ziyoung.shadow4j.shadow;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

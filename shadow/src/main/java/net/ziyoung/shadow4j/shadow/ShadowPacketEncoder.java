@@ -1,4 +1,4 @@
-package net.ziyoung.shadow;
+package net.ziyoung.shadow4j.shadow;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -7,14 +7,14 @@ import io.netty.handler.codec.MessageToByteEncoder;
 
 import java.security.SecureRandom;
 
-public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
+public class ShadowPacketEncoder extends MessageToByteEncoder<ShadowPacket> {
 
     private final ShadowCipher cipher;
     private final byte[] salt;
     private boolean cipherInit = false;
 
-    public ShadowStreamEncoder(ShadowConfig config) {
-        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName());
+    public ShadowPacketEncoder(ShadowConfig config) {
+        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName(), false);
         this.salt = new byte[cipher.saltSize()];
     }
 
@@ -24,19 +24,17 @@ public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
     }
 
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, ShadowStream shadowStream, ByteBuf byteBuf) throws Exception {
+    protected void encode(ChannelHandlerContext channelHandlerContext, ShadowPacket shadowPacket, ByteBuf byteBuf) throws Exception {
         if (!cipherInit) {
             init();
             cipherInit = true;
         }
-        byte[] data = shadowStream.getData();
+        byte[] data = shadowPacket.getData();
         int size = data == null ? 0 : data.length;
-        if (size == 0 || size > ShadowStream.MAX_PAYLOAD_LENGTH) {
-            throw new EncoderException("fail to decode stream: invalid data size " + size);
+        if (size == 0 || size > ShadowPacket.MAX_PAYLOAD_LENGTH) {
+            throw new EncoderException("fail to decode packet: invalid data size " + size);
         }
         byteBuf.writeBytes(salt);
-        byte[] lengthBytes = new byte[]{(byte) (size >> 8), (byte) size};
-        byteBuf.writeBytes(cipher.encrypt(lengthBytes));
         byteBuf.writeBytes(cipher.encrypt(data));
     }
 

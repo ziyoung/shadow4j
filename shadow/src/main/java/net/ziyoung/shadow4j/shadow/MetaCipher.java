@@ -1,4 +1,4 @@
-package net.ziyoung.shadow;
+package net.ziyoung.shadow4j.shadow;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;

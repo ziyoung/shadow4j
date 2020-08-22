@@ -1,4 +1,4 @@
-package net.ziyoung.shadow;
+package net.ziyoung.shadow4j.shadow;
 
 import io.netty.channel.CombinedChannelDuplexHandler;
 

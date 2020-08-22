@@ -1,4 +1,4 @@
-package net.ziyoung.shadow;
+package net.ziyoung.shadow4j.shadow;
 
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Assertions;
