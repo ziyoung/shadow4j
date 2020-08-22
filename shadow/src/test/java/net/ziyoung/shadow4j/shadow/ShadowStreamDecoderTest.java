@@ -40,7 +40,7 @@ public class ShadowStreamDecoderTest {
         ByteBuf byteBuf = Unpooled.buffer();
         byteBuf.writeBytes(salt);
         int size = plaintext.length;
-        byte[] lengthBytes = new byte[]{(byte) (size >> 8), (byte) size};
+        byte[] lengthBytes = ShadowUtils.intToShortBytes(size);
         byte[] bytes = cipher.encrypt(lengthBytes);
         byteBuf.writeBytes(bytes);
         byteBuf.writeBytes(cipher.encrypt(plaintext));

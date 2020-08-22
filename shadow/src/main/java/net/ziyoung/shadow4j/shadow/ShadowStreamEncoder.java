@@ -35,7 +35,7 @@ public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
             throw new EncoderException("fail to decode stream: invalid data size " + size);
         }
         byteBuf.writeBytes(salt);
-        byte[] lengthBytes = new byte[]{(byte) (size >> 8), (byte) size};
+        byte[] lengthBytes = ShadowUtils.intToShortBytes(size);
         byteBuf.writeBytes(cipher.encrypt(lengthBytes));
         byteBuf.writeBytes(cipher.encrypt(data));
     }

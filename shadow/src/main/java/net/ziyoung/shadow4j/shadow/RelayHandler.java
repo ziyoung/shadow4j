@@ -28,7 +28,7 @@ public class RelayHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ChannelUtils.closeOnFlush(outBoundChannel);
+        ShadowUtils.closeChannelOnFlush(outBoundChannel);
     }
 
 }

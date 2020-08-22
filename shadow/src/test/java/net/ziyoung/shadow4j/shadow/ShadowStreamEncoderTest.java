@@ -39,7 +39,7 @@ public class ShadowStreamEncoderTest {
                 byte[] bytes = new byte[size];
                 byteBuf.readBytes(bytes);
                 int length = plaintext.length;
-                byte[] lengthBytes = new byte[]{(byte) (length >> 8), (byte) length};
+                byte[] lengthBytes = ShadowUtils.intToShortBytes(length);
                 byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(lengthBytes));
                 Assertions.assertArrayEquals(ciphertext, bytes);
             }
