@@ -12,15 +12,15 @@ import java.security.SecureRandom;
 
 public class ShadowPacketDecoderTest {
 
-    private static final byte[] password = "change this password to a secret".getBytes(StandardCharsets.UTF_8);
-    private static final byte[] plaintext = "example plaintext".getBytes(StandardCharsets.UTF_8);
-    private static final ShadowConfig aesConfig = new ShadowConfig("aes", password);
-    private static final ShadowConfig chacha20Config = new ShadowConfig("chacha20", password);
+    private static final byte[] PASSWORD = "change this password to a secret".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] PLAINTEXT = "example plaintext".getBytes(StandardCharsets.UTF_8);
+    private static final ShadowConfig AES_CONFIG = new ShadowConfig(null, "aes", PASSWORD);
+    private static final ShadowConfig CHACHA_20_CONFIG = new ShadowConfig(null, "chacha20", PASSWORD);
 
     @Test
     @DisplayName("test decoding shadow packet")
     void testPacketDecoded() {
-        ShadowConfig[] configs = new ShadowConfig[]{aesConfig, chacha20Config};
+        ShadowConfig[] configs = new ShadowConfig[]{AES_CONFIG, CHACHA_20_CONFIG};
         for (ShadowConfig config : configs) {
             EmbeddedChannel channel = new EmbeddedChannel(new ShadowPacketDecoder(config));
             ByteBuf byteBuf = Assertions.assertDoesNotThrow(() -> prepareByteBuf(config));
@@ -28,7 +28,7 @@ public class ShadowPacketDecoderTest {
             Assertions.assertTrue(channel.finish());
             ShadowPacket shadowPacket = channel.readInbound();
             Assertions.assertNotNull(shadowPacket.getData());
-            Assertions.assertArrayEquals(plaintext, shadowPacket.getData());
+            Assertions.assertArrayEquals(PLAINTEXT, shadowPacket.getData());
         }
     }
 
@@ -39,7 +39,7 @@ public class ShadowPacketDecoderTest {
         cipher.initEncrypt(salt);
         ByteBuf byteBuf = Unpooled.buffer();
         byteBuf.writeBytes(salt);
-        byteBuf.writeBytes(cipher.encrypt(plaintext));
+        byteBuf.writeBytes(cipher.encrypt(PLAINTEXT));
         return byteBuf;
     }
 

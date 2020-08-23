@@ -10,9 +10,9 @@ import java.util.Arrays;
 
 public class CipherTest {
 
-    private static final byte[] password = "change this password to a secret".getBytes(StandardCharsets.UTF_8);
-    private static final byte[] plaintext = "example plaintext".getBytes(StandardCharsets.UTF_8);
-    private static final byte[] salt = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+    private static final byte[] PASSWORD = "change this password to a secret".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] PLAINTEXT = "example plaintext".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] SALT = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
     @Test
     @DisplayName("test ase-gcm")
@@ -27,7 +27,7 @@ public class CipherTest {
         for (int i = 0; i < sizes.length; i++) {
             int size = sizes[i];
             String result = results[i];
-            byte[] pwd = Arrays.copyOf(password, size);
+            byte[] pwd = Arrays.copyOf(PASSWORD, size);
             ShadowCipher cipher = new MetaCipher(pwd, "aes");
             encryptAndDecrypt(cipher, result);
         }
@@ -38,7 +38,7 @@ public class CipherTest {
     void testChacha20() {
         // https://play.golang.org/p/u9ORp0dSo8y
         String result = "5310756ef93fbd0641102f25f6ab83d59587441a2439b4aa4eef475fe8f6512277";
-        ShadowCipher cipher = new MetaCipher(password, "chacha20");
+        ShadowCipher cipher = new MetaCipher(PASSWORD, "chacha20");
         encryptAndDecrypt(cipher, result);
     }
 
@@ -48,7 +48,7 @@ public class CipherTest {
         // see https://play.golang.org/p/jSirI1lXWiW
         String result = "26091960993f19de456d340a7d0482a892e91a230364e1b85a8fb6a2e7666f5b";
         int size = 32;
-        byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.computeKdf(password, 32));
+        byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.computeKdf(PASSWORD, 32));
         Assertions.assertEquals(size, key.length);
         Assertions.assertEquals(result, Hex.encodeHexString(key));
     }
@@ -59,19 +59,19 @@ public class CipherTest {
         // https://play.golang.org/p/fxVIOlEs_an
         String result = "65a1621f4f54730f90bc5338f108b5d910279319b1abbf190d162483834401c7";
         byte[] info = "ss-subkey".getBytes(StandardCharsets.UTF_8);
-        byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.hkdfSha1(password, salt, info, password.length));
-        Assertions.assertEquals(password.length, key.length);
+        byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.hkdfSha1(PASSWORD, SALT, info, PASSWORD.length));
+        Assertions.assertEquals(PASSWORD.length, key.length);
         Assertions.assertEquals(result, Hex.encodeHexString(key));
     }
 
     private void encryptAndDecrypt(ShadowCipher cipher, String result) {
-        Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(salt));
-        byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(plaintext));
+        Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(SALT));
+        byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(PLAINTEXT));
         Assertions.assertEquals(result, Hex.encodeHexString(ciphertext));
 
-        Assertions.assertDoesNotThrow(() -> cipher.initDecrypt(salt));
+        Assertions.assertDoesNotThrow(() -> cipher.initDecrypt(SALT));
         byte[] decrypttext = Assertions.assertDoesNotThrow(() -> cipher.decrypt(ciphertext));
-        Assertions.assertArrayEquals(plaintext, decrypttext);
+        Assertions.assertArrayEquals(PLAINTEXT, decrypttext);
     }
 
 }

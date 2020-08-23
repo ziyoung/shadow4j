@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
+import java.util.Map;
 
 /***
  * cipher names: https://docs.oracle.com/en/java/javase/14/docs/specs/security/standard-names.html
@@ -16,6 +17,11 @@ public class MetaCipher implements ShadowCipher {
 
     public static final int TAG_SIZE = 16;
     public static final int LENGTH_SIZE = 2;
+    public static final Map<String, Integer> CIPHER_CONFIG = Map.of(
+            "aes-128-gcm", 16,
+            "aes-192-gcm", 24,
+            "aes-256-gcm", 32,
+            "chacha20-ietf-poly1305", 32);
     private static final byte[] HKDF_INFO = "ss-subkey".getBytes(StandardCharsets.UTF_8);
     private static final byte[] DEFAULT_NONCE = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -40,7 +46,7 @@ public class MetaCipher implements ShadowCipher {
 
     public MetaCipher(byte[] psk, String cipherName, boolean increaseNonce) {
         this(psk, cipherName);
-        this.increaseNonce = false;
+        this.increaseNonce = increaseNonce;
     }
 
     private void validateKey() {
@@ -51,11 +57,11 @@ public class MetaCipher implements ShadowCipher {
                 case 32: // aes-256-gcm
                     break;
                 default:
-                    throw new IllegalArgumentException("invalid aes key");
+                    throw new IllegalStateException("invalid aes key");
             }
         } else {
             if (keySize() != 32) {
-                throw new IllegalArgumentException("invalid chacha20 key");
+                throw new IllegalStateException("invalid chacha20 key");
             }
         }
     }
@@ -81,7 +87,7 @@ public class MetaCipher implements ShadowCipher {
     }
 
     private boolean isAes() {
-        return "aes".equals(cipherName);
+        return "aes".equalsIgnoreCase(cipherName);
     }
 
     public void updateNonceAndCipher() throws Exception {

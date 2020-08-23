@@ -3,7 +3,7 @@ package net.ziyoung.shadow4j.shadow;
 import org.apache.commons.validator.routines.InetAddressValidator;
 
 import java.net.InetAddress;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -11,9 +11,9 @@ public class SocksAddress extends ShadowStream {
 
     private final static String INVALID_ADDRESS = "invalid socks address";
 
-    public static SocksAddress valueOf(URL url) throws Exception {
-        String host = url.getHost();
-        int port = url.getPort();
+    public static SocksAddress valueOf(URI uri) throws Exception {
+        String host = uri.getHost();
+        int port = uri.getPort();
         if (port == -1) {
             throw new IllegalArgumentException("invalid url: port is -1");
         }
@@ -37,8 +37,9 @@ public class SocksAddress extends ShadowStream {
         data[0] = type;
         System.arraycopy(address, 0, data, 1, address.length);
 
-        data[data.length - 2] = (byte) (port >> 8);
-        data[data.length - 1] = (byte) port;
+        byte[] bytes = ShadowUtils.intToShortBytes(port);
+        data[data.length - 2] = bytes[0];
+        data[data.length - 1] = bytes[1];
 
         return new SocksAddress(data);
     }
@@ -62,7 +63,7 @@ public class SocksAddress extends ShadowStream {
         } else {
             try {
                 InetAddress inetAddress = InetAddress.getByAddress(address);
-                return inetAddress.toString() + ":" + port;
+                return inetAddress.getHostAddress() + ":" + port;
             } catch (Exception exception) {
                 return INVALID_ADDRESS;
             }
