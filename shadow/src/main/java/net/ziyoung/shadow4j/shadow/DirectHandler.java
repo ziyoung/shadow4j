@@ -17,7 +17,6 @@ public class DirectHandler extends ChannelInboundHandlerAdapter {
         promise.setSuccess(ctx.channel());
     }
 
-
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         promise.setFailure(cause);

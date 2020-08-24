@@ -56,7 +56,7 @@ public class Main {
         boolean verboseMode = commandLine.hasOption("verbose");
         String url = commandLine.getOptionValue("c").trim();
         ShadowConfig shadowConfig = parseClientUrl(url);
-        String socks = commandLine.hasOption("s") ? commandLine.getOptionValue("s").trim() : "";
+        InetSocketAddress socks = commandLine.hasOption("s") ? parseSocksUrl(commandLine.getOptionValue("s").trim()) : null;
 
         return ClientConfig.builder()
                 .verboseMode(verboseMode)
@@ -93,6 +93,19 @@ public class Main {
         byte[] key = KdUtil.computeKdf(password, size);
 
         return new ShadowConfig(new InetSocketAddress(host, port), strings[0], key);
+    }
+
+    private static InetSocketAddress parseSocksUrl(String url) throws Exception {
+        if (!url.startsWith("socks://")) {
+            url = "socks://" + url;
+        }
+        URI uri = new URI(url);
+        String host = uri.getHost();
+        int port = uri.getPort();
+        if (host == null || port == -1) {
+            throw new IllegalArgumentException("invalid url");
+        }
+        return new InetSocketAddress(host, port);
     }
 
 }
