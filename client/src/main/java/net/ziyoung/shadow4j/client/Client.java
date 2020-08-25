@@ -5,6 +5,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import net.ziyoung.shadow4j.client.handler.ClientHandlerInitializer;
 
 public class Client {
 
@@ -26,7 +27,8 @@ public class Client {
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(bossGroup, workerGroup)
                 .localAddress(config.getSocks().getPort())
-                .channel(NioServerSocketChannel.class);
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ClientHandlerInitializer(config));
         ChannelFuture future = bootstrap.bind().sync();
         future.channel().closeFuture().sync();
     }

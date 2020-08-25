@@ -12,6 +12,13 @@ public final class ShadowUtils {
         }
     }
 
+    public static int parseSocksOption(String option) {
+        if (option.contains(":")) {
+            return Integer.parseInt(option.split(":")[1]);
+        }
+        return Integer.parseInt(option);
+    }
+
     public static int shorBytesToInt(byte[] bytes) {
         if (bytes == null || bytes.length != 2) {
             throw new IllegalArgumentException("invalid bytes");

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.ziyoung.shadow4j.shadow.KdUtil;
 import net.ziyoung.shadow4j.shadow.MetaCipher;
 import net.ziyoung.shadow4j.shadow.ShadowConfig;
+import net.ziyoung.shadow4j.shadow.ShadowUtils;
 import org.apache.commons.cli.*;
 
 import java.net.InetSocketAddress;
@@ -24,30 +25,40 @@ public class Main {
             return;
         }
 
-        if (!commandLine.hasOption("c")) {
-            helpFormatter.printHelp("c", options);
-            return;
-        }
+//        if (!commandLine.hasOption("c")) {
+//            helpFormatter.printHelp("c", options);
+//            return;
+//        }
 
         ClientConfig clientConfig = readClientConfig(commandLine);
-        log.info("clientConfig: {} ", clientConfig.toString());
+        log.info("client clientConfig: {} ", clientConfig.toString());
+
+        new Client(clientConfig).start();
     }
 
     private static CommandLine commandLine(String[] args) throws ParseException {
         CommandLineParser parser = new DefaultParser();
 
         options.addOption("verbose", false, "verbose mode");
+        options.addOption("h", false, "help information");
+
         Option socks = Option.builder("s")
                 .longOpt("socks")
                 .desc("SOCKS listen address")
-                .hasArg().build();
+                .hasArg().required().build();
         options.addOption(socks);
+
         Option c = Option.builder("c")
                 .longOpt("client-url")
                 .desc("client connect address or url")
-                .hasArg().build();
+                .hasArg().required().build();
         options.addOption(c);
-        options.addOption("h", false, "help information");
+
+        Option u = Option.builder("u")
+                .longOpt("udp-socks")
+                .desc("Enable UDP support for SOCKS")
+                .build();
+        options.addOption(u);
 
         return parser.parse(options, args);
     }
@@ -56,12 +67,12 @@ public class Main {
         boolean verboseMode = commandLine.hasOption("verbose");
         String url = commandLine.getOptionValue("c").trim();
         ShadowConfig shadowConfig = parseClientUrl(url);
-        InetSocketAddress socks = commandLine.hasOption("s") ? parseSocksUrl(commandLine.getOptionValue("s").trim()) : null;
+        int port = ShadowUtils.parseSocksOption(commandLine.getOptionValue("s").trim());
 
         return ClientConfig.builder()
                 .verboseMode(verboseMode)
                 .shadowConfig(shadowConfig)
-                .socks(socks).build();
+                .socks(new InetSocketAddress("127.0.0.1", port)).build();
     }
 
     private static ShadowConfig parseClientUrl(String url) throws Exception {
@@ -93,19 +104,6 @@ public class Main {
         byte[] key = KdUtil.computeKdf(password, size);
 
         return new ShadowConfig(new InetSocketAddress(host, port), strings[0], key);
-    }
-
-    private static InetSocketAddress parseSocksUrl(String url) throws Exception {
-        if (!url.startsWith("socks://")) {
-            url = "socks://" + url;
-        }
-        URI uri = new URI(url);
-        String host = uri.getHost();
-        int port = uri.getPort();
-        if (host == null || port == -1) {
-            throw new IllegalArgumentException("invalid url");
-        }
-        return new InetSocketAddress(host, port);
     }
 
 }

@@ -42,7 +42,7 @@
                     <!--                    </arguments>-->
                     <arguments>
                         <argument>-c ss://chacha20-ietf-poly1305:1234567@127.0.0.1:8488</argument>
-                        <argument>-socks 127.0.0.1:1080</argument>
+                        <argument>-socks :1080</argument>
                     </arguments>
                 </configuration>
             </plugin>

@@ -13,5 +13,6 @@ public class ClientConfig {
     private final ShadowConfig shadowConfig;
     private final InetSocketAddress socks;
     private final boolean verboseMode;
+    private final boolean unpAssociate;
 
 }

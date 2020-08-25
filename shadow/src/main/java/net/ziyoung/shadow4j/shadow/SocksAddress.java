@@ -12,8 +12,10 @@ public class SocksAddress extends ShadowStream {
     private final static String INVALID_ADDRESS = "invalid socks address";
 
     public static SocksAddress valueOf(URI uri) throws Exception {
-        String host = uri.getHost();
-        int port = uri.getPort();
+        return valueOf(uri.getHost(), uri.getPort());
+    }
+
+    public static SocksAddress valueOf(String host, int port) throws Exception {
         if (port == -1) {
             throw new IllegalArgumentException("invalid url: port is -1");
         }
