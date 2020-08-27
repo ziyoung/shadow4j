@@ -1,4 +1,4 @@
-package net.ziyoung.shadow;
+package net.ziyoung.shadow4j.shadow;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -32,7 +32,7 @@ public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.St
                 bytes = new byte[MetaCipher.LENGTH_SIZE + MetaCipher.TAG_SIZE];
                 byteBuf.readBytes(bytes);
                 plaintext = cipher.decrypt(bytes);
-                length = ((plaintext[0] << 8) + Byte.toUnsignedInt(plaintext[1])) & ShadowStream.MAX_PAYLOAD_LENGTH;
+                length = ShadowUtils.shorBytesToInt(plaintext) & ShadowStream.MAX_PAYLOAD_LENGTH;
                 checkpoint(State.READ_PAYLOAD);
                 break;
             case READ_PAYLOAD:

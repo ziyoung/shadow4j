@@ -1,9 +1,8 @@
-package net.ziyoung.shadow;
+package net.ziyoung.shadow4j.shadow;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
-
 
 /**
  * key derivation util
