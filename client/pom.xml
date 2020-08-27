@@ -41,8 +41,8 @@
                     <!--                        <argument>-h</argument>-->
                     <!--                    </arguments>-->
                     <arguments>
-                        <argument>-c ss://chacha20-ietf-poly1305:1234567@127.0.0.1:8488</argument>
-                        <argument>-socks :1090</argument>
+                        <argument>-c ss://chacha20-ietf-poly1305:123456@127.0.0.1:8488</argument>
+                        <argument>-s 2048</argument>
                     </arguments>
                 </configuration>
             </plugin>

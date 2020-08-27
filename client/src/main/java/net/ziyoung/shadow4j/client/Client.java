@@ -20,7 +20,12 @@ public class Client {
     }
 
     public void start() throws Exception {
-        serveSocks();
+        try {
+            serveSocks();
+        } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
     }
 
     private void serveSocks() throws InterruptedException {
@@ -30,6 +35,7 @@ public class Client {
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ClientHandlerInitializer(config));
         ChannelFuture future = bootstrap.bind().sync();
+        // TODO: not use sync().
         future.channel().closeFuture().sync();
     }
 

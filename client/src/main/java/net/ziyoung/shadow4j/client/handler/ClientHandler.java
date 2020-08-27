@@ -44,6 +44,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
                             localAddress.getHostName(),
                             localAddress.getPort()));
                 }
+                log.debug("start building connection");
                 ctx.pipeline().addAfter(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));
                 ctx.fireChannelRead(address);
                 ctx.pipeline().remove(this);
@@ -51,6 +52,9 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
                 log.warn("unsupported command type {}", type);
                 ctx.close();
             }
+        } else {
+            log.warn("unknown message {}", socksMessage);
+            ctx.close();
         }
     }
 
