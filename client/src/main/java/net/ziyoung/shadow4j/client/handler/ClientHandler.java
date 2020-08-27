@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.ziyoung.shadow4j.client.ClientConfig;
 import net.ziyoung.shadow4j.shadow.ShadowUtils;
+import net.ziyoung.shadow4j.shadow.SocksAddress;
 
 import java.net.InetSocketAddress;
 
@@ -22,15 +23,13 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
         if (socksMessage instanceof Socks5InitialRequest) {
             ctx.pipeline().remove(Socks5InitialRequestDecoder.class);
             ctx.pipeline().addFirst(new Socks5CommandRequestDecoder());
-            ctx.write(new DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH));
+            ctx.writeAndFlush(new DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH));
         } else if (socksMessage instanceof Socks5CommandRequest) {
             Socks5CommandRequest request = (Socks5CommandRequest) socksMessage;
             Socks5CommandType type = request.type();
-
+            SocksAddress address = SocksAddress.valueOf(request.dstAddr(), request.dstPort());
             if (type == Socks5CommandType.CONNECT) {
                 ctx.write(new DefaultSocks5CommandResponse(Socks5CommandStatus.SUCCESS, Socks5AddressType.IPv4));
-                ctx.pipeline().addAfter(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));
-                ctx.pipeline().remove(this);
             } else if (type == Socks5CommandType.UDP_ASSOCIATE) {
                 if (!config.isUnpAssociate()) {
                     log.warn("unp associate is not supported, so this channel will be closed");
@@ -44,9 +43,10 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
                             Socks5AddressType.IPv4,
                             localAddress.getHostName(),
                             localAddress.getPort()));
-                    ctx.pipeline().addAfter(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));
-                    ctx.pipeline().remove(this);
                 }
+                ctx.pipeline().addAfter(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));
+                ctx.fireChannelRead(address);
+                ctx.pipeline().remove(this);
             } else {
                 log.warn("unsupported command type {}", type);
                 ctx.close();

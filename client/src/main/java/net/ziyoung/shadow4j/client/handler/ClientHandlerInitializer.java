@@ -22,8 +22,8 @@ public class ClientHandlerInitializer extends ChannelInitializer<SocketChannel> 
         channel.pipeline().addLast(new Socks5InitialRequestDecoder());
         channel.pipeline().addLast(Socks5ServerEncoder.DEFAULT);
         channel.pipeline().addLast(new IdleStateHandler(0, 0, 60, TimeUnit.SECONDS));
-        channel.pipeline().addLast(new ClientHandler(config));
         channel.pipeline().addLast(ChannelIdleHandler.INSTANCE);
+        channel.pipeline().addLast(new ClientHandler(config));
         channel.pipeline().addLast(ExceptionHandler.INSTANCE);
     }
 

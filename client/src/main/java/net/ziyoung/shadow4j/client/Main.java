@@ -20,15 +20,11 @@ public class Main {
         CommandLine commandLine = commandLine(args);
         HelpFormatter helpFormatter = new HelpFormatter();
 
-        if (commandLine.hasOption("h")) {
+        boolean displayHelp = commandLine.hasOption("h") || !(commandLine.hasOption("c") && commandLine.hasOption("s"));
+        if (displayHelp) {
             helpFormatter.printHelp("shadow-client", options);
             return;
         }
-
-//        if (!commandLine.hasOption("c")) {
-//            helpFormatter.printHelp("c", options);
-//            return;
-//        }
 
         ClientConfig clientConfig = readClientConfig(commandLine);
         log.info("client clientConfig: {} ", clientConfig.toString());
@@ -45,13 +41,13 @@ public class Main {
         Option socks = Option.builder("s")
                 .longOpt("socks")
                 .desc("SOCKS listen address")
-                .hasArg().required().build();
+                .hasArg().build();
         options.addOption(socks);
 
         Option c = Option.builder("c")
                 .longOpt("client-url")
                 .desc("client connect address or url")
-                .hasArg().required().build();
+                .hasArg().build();
         options.addOption(c);
 
         Option u = Option.builder("u")
