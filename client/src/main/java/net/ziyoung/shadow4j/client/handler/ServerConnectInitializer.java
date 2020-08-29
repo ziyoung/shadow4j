@@ -7,6 +7,7 @@ import io.netty.util.concurrent.Promise;
 import lombok.AllArgsConstructor;
 import net.ziyoung.shadow4j.shadow.CombinedShadowStreamCodec;
 import net.ziyoung.shadow4j.shadow.DirectHandler;
+import net.ziyoung.shadow4j.shadow.ExceptionHandler;
 import net.ziyoung.shadow4j.shadow.ShadowConfig;
 
 @AllArgsConstructor
@@ -19,6 +20,7 @@ public class ServerConnectInitializer extends ChannelInitializer<SocketChannel> 
     protected void initChannel(SocketChannel channel) throws Exception {
         channel.pipeline().addLast(new CombinedShadowStreamCodec(config));
         channel.pipeline().addLast(new DirectHandler(promise));
+        channel.pipeline().addLast(ExceptionHandler.INSTANCE);
     }
 
 }

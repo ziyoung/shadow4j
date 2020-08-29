@@ -37,12 +37,7 @@ public class Main {
 
         options.addOption("verbose", false, "verbose mode");
         options.addOption("h", false, "help information");
-
-        Option socks = Option.builder("s")
-                .longOpt("socks")
-                .desc("SOCKS listen address")
-                .hasArg().build();
-        options.addOption(socks);
+        options.addOption("s", true, "listen address");
 
         Option c = Option.builder("c")
                 .longOpt("client-url")

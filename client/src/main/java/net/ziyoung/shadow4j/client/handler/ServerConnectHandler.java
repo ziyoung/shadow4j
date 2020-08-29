@@ -26,14 +26,22 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<SocksAddre
         promise.addListener((FutureListener<Channel>) future -> {
             if (future.isSuccess()) {
                 Channel outboundChannel = future.getNow();
+                log.debug("write address '{}' to server", address);
+
                 ChannelFuture responseFuture = outboundChannel.writeAndFlush(address);
                 responseFuture.addListener((ChannelFutureListener) future1 -> {
-                    ctx.pipeline().remove(ServerConnectHandler.this);
-                    outboundChannel.pipeline().addLast(new RelayHandler(ctx.channel()));
-                    ctx.pipeline().addLast(new RelayHandler(outboundChannel));
+                    if (future1.isSuccess()) {
+                        // handshake is done, so we flush message to inform SOCK5 client
+                        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
 
-                    // handshake done, so we flush message to inform SOCK5 client
-                    ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
+                        log.debug("start to add relay handler");
+                        ctx.pipeline().remove(ServerConnectHandler.this);
+                        outboundChannel.pipeline().addLast(new RelayHandler(ctx.channel()));
+                        ctx.pipeline().addLast(new RelayHandler(outboundChannel));
+                    } else {
+                        log.error("send address error", future1.cause());
+                        ShadowUtils.closeChannelOnFlush(ctx.channel());
+                    }
                 });
             } else {
                 ShadowUtils.closeChannelOnFlush(ctx.channel());
@@ -50,7 +58,7 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<SocksAddre
         bootstrap.connect(server.getAddress(), server.getPort())
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
-                        log.info("proxy {} <-> {}", address, server);
+                        log.info("proxy {} <-> {} <-> {}", future.channel().localAddress(), server, address);
                     } else {
                         log.error("unable to connect server {}", server);
                         ShadowUtils.closeChannelOnFlush(inboundChannel);
