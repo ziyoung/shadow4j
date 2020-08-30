@@ -31,13 +31,20 @@ public class SocksAddress extends ShadowStream {
             } else {
                 type = Type.IPv6.code;
             }
+            data = new byte[1 + address.length + 2];
+            data[0] = type;
+            System.arraycopy(address, 0, data, 1, address.length);
         } else {
             address = host.getBytes(StandardCharsets.UTF_8);
+            if (address.length > 255) {
+                throw new IllegalStateException("host size is greater than 255");
+            }
             type = Type.DomainName.code;
+            data = new byte[1 + 1 + address.length + 2];
+            data[0] = type;
+            data[1] = (byte) address.length;
+            System.arraycopy(address, 0, data, 2, address.length);
         }
-        data = new byte[1 + address.length + 2];
-        data[0] = type;
-        System.arraycopy(address, 0, data, 1, address.length);
 
         byte[] bytes = ShadowUtils.intToShortBytes(port);
         data[data.length - 2] = bytes[0];
@@ -57,9 +64,11 @@ public class SocksAddress extends ShadowStream {
         if (length < 3) {
             return INVALID_ADDRESS;
         }
+
         boolean isDomainName = data[0] == Type.DomainName.code;
+        int from = isDomainName ? 2 : 1;
         int port = (data[length - 2] << 8) + Byte.toUnsignedInt(data[length - 1]);
-        byte[] address = Arrays.copyOfRange(data, 1, length - 2);
+        byte[] address = Arrays.copyOfRange(data, from, length - 2);
         if (isDomainName) {
             return new String(address) + ":" + port;
         } else {

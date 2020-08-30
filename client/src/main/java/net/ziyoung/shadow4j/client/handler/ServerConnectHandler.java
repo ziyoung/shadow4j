@@ -26,10 +26,11 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<SocksAddre
         promise.addListener((FutureListener<Channel>) future -> {
             if (future.isSuccess()) {
                 Channel outboundChannel = future.getNow();
-                log.debug("write address '{}' to server", address);
-
+                log.debug("start to write address '{}' to server", address);
+                log.debug("channel is ==> {}", outboundChannel);
                 ChannelFuture responseFuture = outboundChannel.writeAndFlush(address);
                 responseFuture.addListener((ChannelFutureListener) future1 -> {
+                    log.debug("write is success");
                     if (future1.isSuccess()) {
                         // handshake is done, so we flush message to inform SOCK5 client
                         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);

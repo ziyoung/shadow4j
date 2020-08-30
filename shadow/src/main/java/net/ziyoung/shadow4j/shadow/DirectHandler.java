@@ -16,7 +16,7 @@ public class DirectHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.pipeline().remove(this);
-        log.debug("connect success. This handler will be removed soon");
+        log.debug("channel: {} connect success. This handler will be removed soon", ctx.channel());
         promise.setSuccess(ctx.channel());
     }
 

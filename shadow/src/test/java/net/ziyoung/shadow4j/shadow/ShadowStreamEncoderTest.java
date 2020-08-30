@@ -58,4 +58,21 @@ public class ShadowStreamEncoderTest {
         }
     }
 
+//    @Test
+//    @DisplayName("use cipher to decode address")
+//    void testEncodeAddress() {
+//        byte[] password = "123456".getBytes(StandardCharsets.UTF_8);
+//        byte[] key = Assertions.assertDoesNotThrow(() -> KdUtil.computeKdf(password, 32));
+//        ShadowConfig config = new ShadowConfig(null, "chacha20-ietf-poly1305", key);
+//        ShadowCipher cipher = new MetaCipher(config.getPassword(), config.getCipherName());
+//        byte[] salt = new byte[32];
+//        log.warn("salt {}", salt);
+//        Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(salt));
+//        SocksAddress address = Assertions.assertDoesNotThrow(() -> SocksAddress.valueOf("baidu.com", 80));
+//        String result = "0953f710e165bf1b860e810371afc33eed9d2914fd401762b9d50243a9e5b5bcb1a06e3363334b66ef5811b04cc542d220cf139548dcfb6296e9a40f45fbe46db2488daa65f9ffbb4d1fcc1617c144f049d5086f6b75b1fb55f37c3ab8e27e0fed2c24580b";
+//        byte[] bytes = Assertions.assertDoesNotThrow(() -> cipher.encrypt(address.getData()));
+//        log.warn("bytes {}", bytes);
+//        Assertions.assertEquals(result, Hex.encodeHexString(bytes));
+//    }
+
 }
