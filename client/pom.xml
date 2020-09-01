@@ -38,6 +38,7 @@
                 <configuration>
                     <mainClass>net.ziyoung.shadow4j.client.Main</mainClass>
                     <arguments>
+                        <!--                        <argument>-h</argument>-->
                         <argument>-c ss://chacha20-ietf-poly1305:123456@127.0.0.1:8488</argument>
                         <argument>-s 2048</argument>
                         <argument>-verbose</argument>

@@ -10,7 +10,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 import lombok.AllArgsConstructor;
 import net.ziyoung.shadow4j.client.ClientConfig;
 import net.ziyoung.shadow4j.shadow.ChannelIdleHandler;
-import net.ziyoung.shadow4j.shadow.ExceptionHandler;
 
 import java.util.concurrent.TimeUnit;
 
@@ -28,7 +27,7 @@ public class ClientHandlerInitializer extends ChannelInitializer<SocketChannel> 
         channel.pipeline().addLast(new IdleStateHandler(0, 0, 60, TimeUnit.SECONDS));
         channel.pipeline().addLast(ChannelIdleHandler.INSTANCE);
         channel.pipeline().addLast(new ClientHandler(config));
-        channel.pipeline().addLast(ExceptionHandler.INSTANCE);
+//        channel.pipeline().addLast(ExceptionHandler.INSTANCE);
     }
 
 }

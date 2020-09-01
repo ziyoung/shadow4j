@@ -11,4 +11,8 @@ public class ShadowStream {
 
     private final byte[] data;
 
+    public boolean sendSalt() {
+        return false;
+    }
+
 }

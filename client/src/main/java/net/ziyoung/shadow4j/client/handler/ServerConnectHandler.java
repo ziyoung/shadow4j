@@ -36,9 +36,9 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<SocksAddre
                         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
 
                         log.debug("start to add relay handler");
-                        ctx.pipeline().remove(ServerConnectHandler.this);
-                        outboundChannel.pipeline().addLast(new RelayHandler(ctx.channel()));
-                        ctx.pipeline().addLast(new RelayHandler(outboundChannel));
+                        ctx.pipeline().replace(ctx.name(), null, new RelayHandler(outboundChannel, false));
+                        outboundChannel.pipeline().addLast(new RelayHandler(ctx.channel(), true));
+//                        ctx.pipeline().addLast(new RelayHandler(outboundChannel));
                     } else {
                         log.error("send address error", future1.cause());
                         ShadowUtils.closeChannelOnFlush(ctx.channel());

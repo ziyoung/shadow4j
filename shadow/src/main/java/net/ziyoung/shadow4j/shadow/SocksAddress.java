@@ -81,6 +81,11 @@ public class SocksAddress extends ShadowStream {
         }
     }
 
+    @Override
+    public boolean sendSalt() {
+        return true;
+    }
+
     enum Type {
 
         IPv4((byte) 1),
