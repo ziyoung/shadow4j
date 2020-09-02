@@ -26,6 +26,8 @@ public class ShadowStreamDecoderTest {
             ByteBuf byteBuf = Assertions.assertDoesNotThrow(() -> prepareByteBuf(config));
             Assertions.assertTrue(channel.writeInbound(byteBuf));
             Assertions.assertTrue(channel.finish());
+
+            // decode message with salt
             ShadowStream shadowStream = channel.readInbound();
             Assertions.assertNotNull(shadowStream.getData());
             Assertions.assertArrayEquals(PLAINTEXT, shadowStream.getData());
@@ -37,6 +39,7 @@ public class ShadowStreamDecoderTest {
         byte[] salt = new byte[cipher.saltSize()];
         new SecureRandom().nextBytes(salt);
         cipher.initEncrypt(salt);
+
         ByteBuf byteBuf = Unpooled.buffer();
         byteBuf.writeBytes(salt);
         int size = PLAINTEXT.length;

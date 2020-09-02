@@ -3,6 +3,7 @@ package net.ziyoung.shadow4j.client.handler;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.Promise;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ public class ServerConnectInitializer extends ChannelInitializer<SocketChannel> 
 
     @Override
     protected void initChannel(SocketChannel channel) throws Exception {
+        channel.pipeline().addLast(new LoggingHandler());
         channel.pipeline().addLast(new CombinedShadowStreamCodec(config));
         channel.pipeline().addLast(new IdleStateHandler(0, 0, 60, TimeUnit.SECONDS));
         channel.pipeline().addLast(ChannelIdleHandler.INSTANCE);

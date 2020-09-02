@@ -40,6 +40,7 @@ public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.St
                 byteBuf.readBytes(bytes);
                 plaintext = cipher.decrypt(bytes);
                 list.add(new ShadowStream(plaintext));
+                checkpoint(State.READ_LENGTH);
                 break;
             default:
                 throw new DecoderException("unreachable branch");

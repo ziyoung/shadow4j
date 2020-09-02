@@ -30,7 +30,6 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<SocksAddre
                 log.debug("channel is ==> {}", outboundChannel);
                 ChannelFuture responseFuture = outboundChannel.writeAndFlush(address);
                 responseFuture.addListener((ChannelFutureListener) future1 -> {
-                    log.debug("write is success");
                     if (future1.isSuccess()) {
                         // handshake is done, so we flush message to inform SOCK5 client
                         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
@@ -38,7 +37,6 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<SocksAddre
                         log.debug("start to add relay handler");
                         ctx.pipeline().replace(ctx.name(), null, new RelayHandler(outboundChannel, false));
                         outboundChannel.pipeline().addLast(new RelayHandler(ctx.channel(), true));
-//                        ctx.pipeline().addLast(new RelayHandler(outboundChannel));
                     } else {
                         log.error("send address error", future1.cause());
                         ShadowUtils.closeChannelOnFlush(ctx.channel());
