@@ -14,12 +14,12 @@ import java.net.InetSocketAddress;
 
 @Slf4j
 @AllArgsConstructor
-public class ServerConnectHandler extends SimpleChannelInboundHandler<SocksAddress> {
+public class ServerConnectHandler extends SimpleChannelInboundHandler<ShadowAddress> {
 
     private final ShadowConfig config;
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, SocksAddress address) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, ShadowAddress address) throws Exception {
         Bootstrap bootstrap = new Bootstrap();
 
         Promise<Channel> promise = ctx.executor().newPromise();

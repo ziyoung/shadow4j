@@ -18,7 +18,7 @@ public class ShadowStreamEncoderTest {
     @Test
     @DisplayName("test encoding shadow stream")
     void testStreamEncoded() {
-        SocksAddress address = Assertions.assertDoesNotThrow(() -> SocksAddress.valueOf("example.com", 3000));
+        ShadowAddress address = Assertions.assertDoesNotThrow(() -> ShadowAddress.valueOf("example.com", 3000));
         ShadowStream message = new ShadowStream(PLAINTEXT);
         ShadowConfig[] configs = new ShadowConfig[]{AES_CONFIG, CHACHA_20_CONFIG};
         for (ShadowConfig config : configs) {

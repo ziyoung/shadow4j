@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.ziyoung.shadow4j.client.ClientConfig;
 import net.ziyoung.shadow4j.shadow.ShadowUtils;
-import net.ziyoung.shadow4j.shadow.SocksAddress;
+import net.ziyoung.shadow4j.shadow.ShadowAddress;
 
 import java.net.InetSocketAddress;
 
@@ -27,7 +27,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
         } else if (socksMessage instanceof Socks5CommandRequest) {
             Socks5CommandRequest request = (Socks5CommandRequest) socksMessage;
             Socks5CommandType type = request.type();
-            SocksAddress address = SocksAddress.valueOf(request.dstAddr(), request.dstPort());
+            ShadowAddress address = ShadowAddress.valueOf(request.dstAddr(), request.dstPort());
             if (type == Socks5CommandType.CONNECT) {
                 ctx.write(new DefaultSocks5CommandResponse(Socks5CommandStatus.SUCCESS, Socks5AddressType.IPv4));
                 connectServer(ctx, address);
@@ -55,7 +55,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
         }
     }
 
-    private void connectServer(ChannelHandlerContext ctx, SocksAddress address) {
+    private void connectServer(ChannelHandlerContext ctx, ShadowAddress address) {
         log.debug("start connect remote proxy server");
         ctx.pipeline().remove(Socks5CommandRequestDecoder.class);
         ctx.pipeline().replace(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));

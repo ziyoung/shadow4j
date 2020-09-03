@@ -7,15 +7,15 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class SocksAddress extends ShadowStream {
+public class ShadowAddress extends ShadowStream {
 
     private final static String INVALID_ADDRESS = "invalid socks address";
 
-    public static SocksAddress valueOf(URI uri) throws Exception {
+    public static ShadowAddress valueOf(URI uri) throws Exception {
         return valueOf(uri.getHost(), uri.getPort());
     }
 
-    public static SocksAddress valueOf(String host, int port) throws Exception {
+    public static ShadowAddress valueOf(String host, int port) throws Exception {
         if (port == -1) {
             throw new IllegalArgumentException("invalid url: port is -1");
         }
@@ -50,10 +50,10 @@ public class SocksAddress extends ShadowStream {
         data[data.length - 2] = bytes[0];
         data[data.length - 1] = bytes[1];
 
-        return new SocksAddress(data);
+        return new ShadowAddress(data);
     }
 
-    public SocksAddress(byte[] data) {
+    public ShadowAddress(byte[] data) {
         super(data);
     }
 
@@ -79,11 +79,6 @@ public class SocksAddress extends ShadowStream {
                 return INVALID_ADDRESS;
             }
         }
-    }
-
-    @Override
-    public boolean sendSalt() {
-        return true;
     }
 
     enum Type {
