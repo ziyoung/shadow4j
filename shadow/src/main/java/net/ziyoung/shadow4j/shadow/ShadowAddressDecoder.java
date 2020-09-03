@@ -28,42 +28,45 @@ public class ShadowAddressDecoder extends ReplayingDecoder<ShadowAddressDecoder.
         byte[] bytes;
         byte[] plaintext;
         try {
-            switch (state()) {
+            switch (this.state()) {
                 case READ_SALT:
                     int size = decryptCipher.saltSize();
                     byte[] salt = new byte[size];
                     byteBuf.readBytes(salt);
                     decryptCipher.initDecrypt(salt);
                     encryptCipher.initEncrypt(salt);
-                    checkpoint(State.READ_LENGTH);
+                    this.checkpoint(State.READ_LENGTH);
                     break;
                 case READ_LENGTH:
                     bytes = new byte[MetaCipher.LENGTH_SIZE + MetaCipher.TAG_SIZE];
                     byteBuf.readBytes(bytes);
                     plaintext = decryptCipher.decrypt(bytes);
                     length = ShadowUtils.shorBytesToInt(plaintext) & ShadowStream.MAX_PAYLOAD_LENGTH;
-                    checkpoint(State.READ_PAYLOAD);
+                    this.checkpoint(State.READ_PAYLOAD);
                     break;
                 case READ_PAYLOAD:
                     bytes = new byte[length + MetaCipher.TAG_SIZE];
                     byteBuf.readBytes(bytes);
                     plaintext = decryptCipher.decrypt(bytes);
-                    list.add(new ShadowStream(plaintext));
+                    list.add(new ShadowAddress(plaintext));
 
                     ctx.pipeline().addAfter(ctx.name(), null, new ShadowStreamDecoder(decryptCipher));
                     ctx.pipeline().addAfter(ctx.name(), null, new ShadowStreamEncoder(encryptCipher));
                     ctx.pipeline().remove(this);
                     break;
-                default:
-                    throw new DecoderException("unreachable branch");
+                case FAILURE:
+                    byteBuf.skipBytes(this.actualReadableBytes());
+                    break;
             }
         } catch (Exception cause) {
             fail(ctx, list, cause);
         }
     }
 
-    private static void fail(ChannelHandlerContext ctx, List<Object> list, Exception cause) {
+    private void fail(ChannelHandlerContext ctx, List<Object> list, Exception cause) {
         log.error("decode shadow address error: ", cause);
+        this.checkpoint(State.FAILURE);
+
         ByteBuf byteBuf = ctx.alloc().buffer();
         byteBuf.writeBytes(cause.toString().getBytes(StandardCharsets.UTF_8));
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(
@@ -76,7 +79,8 @@ public class ShadowAddressDecoder extends ReplayingDecoder<ShadowAddressDecoder.
     enum State {
         READ_SALT,
         READ_LENGTH,
-        READ_PAYLOAD
+        READ_PAYLOAD,
+        FAILURE
     }
 
 }

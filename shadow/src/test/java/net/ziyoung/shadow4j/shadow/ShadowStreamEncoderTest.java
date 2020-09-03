@@ -22,7 +22,7 @@ public class ShadowStreamEncoderTest {
         ShadowStream message = new ShadowStream(PLAINTEXT);
         ShadowConfig[] configs = new ShadowConfig[]{AES_CONFIG, CHACHA_20_CONFIG};
         for (ShadowConfig config : configs) {
-            EmbeddedChannel channel = new EmbeddedChannel(new ShadowStreamEncoder(config));
+            EmbeddedChannel channel = new EmbeddedChannel(new ShadowAddressEncoder(config));
             Assertions.assertTrue(channel.writeOutbound(address, message));
             Assertions.assertTrue(channel.finish());
 

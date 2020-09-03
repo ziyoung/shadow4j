@@ -25,7 +25,7 @@ public class ShadowAddressEncoder extends MessageToByteEncoder<ShadowAddress> {
         byteBuf.writeBytes(salt);
         ShadowStreamEncoder.encodeShadowStream(cipher, shadowAddress, byteBuf);
 
-        ctx.pipeline().replace(this, (String) null, new ShadowStreamEncoder(cipher));
+        ctx.pipeline().replace(this, null, new ShadowStreamEncoder(cipher));
         ctx.pipeline().addLast();
     }
 
