@@ -33,8 +33,10 @@ public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.St
                 case READ_LENGTH:
                     bytes = new byte[MetaCipher.LENGTH_SIZE + MetaCipher.TAG_SIZE];
                     byteBuf.readBytes(bytes);
+                    log.debug("length bytes is {}", bytes);
                     plaintext = cipher.decrypt(bytes);
                     length = ShadowUtils.shorBytesToInt(plaintext) & ShadowStream.MAX_PAYLOAD_LENGTH;
+                    log.debug("length is {}", length);
                     this.checkpoint(State.READ_PAYLOAD);
                     break;
                 case READ_PAYLOAD:

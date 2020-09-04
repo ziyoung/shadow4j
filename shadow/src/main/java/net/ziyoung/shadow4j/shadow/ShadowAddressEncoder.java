@@ -8,12 +8,14 @@ import java.security.SecureRandom;
 
 public class ShadowAddressEncoder extends MessageToByteEncoder<ShadowAddress> {
 
-    private final ShadowCipher cipher;
+    private final ShadowCipher encryptCipher;
+    private final ShadowCipher decryptCipher;
     private final byte[] salt;
 
     public ShadowAddressEncoder(ShadowConfig config) {
-        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName());
-        this.salt = new byte[cipher.saltSize()];
+        this.encryptCipher = new MetaCipher(config.getPassword(), config.getCipherName());
+        this.decryptCipher = new MetaCipher(config.getPassword(), config.getCipherName());
+        this.salt = new byte[encryptCipher.saltSize()];
     }
 
     @Override
@@ -21,12 +23,15 @@ public class ShadowAddressEncoder extends MessageToByteEncoder<ShadowAddress> {
         ShadowUtils.checkShadowStream(shadowAddress);
 
         new SecureRandom().nextBytes(salt);
-        cipher.initEncrypt(salt);
-        byteBuf.writeBytes(salt);
-        ShadowStreamEncoder.encodeShadowStream(cipher, shadowAddress, byteBuf);
+        encryptCipher.initEncrypt(salt);
+        decryptCipher.initDecrypt(salt);
 
-        ctx.pipeline().replace(this, null, new ShadowStreamEncoder(cipher));
-        ctx.pipeline().addLast();
+        byteBuf.writeBytes(salt);
+        ShadowStreamEncoder.encodeShadowStream(encryptCipher, shadowAddress, byteBuf);
+
+        ctx.pipeline().addAfter(ctx.name(), null, new ShadowStreamDecoder(decryptCipher));
+        ctx.pipeline().addAfter(ctx.name(), null, new ShadowStreamEncoder(encryptCipher));
+        ctx.pipeline().remove(this);
     }
 
 }
