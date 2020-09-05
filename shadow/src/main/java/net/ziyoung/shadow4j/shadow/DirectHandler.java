@@ -5,7 +5,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.concurrent.Promise;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @AllArgsConstructor
 public class DirectHandler extends ChannelInboundHandlerAdapter {
 
@@ -14,6 +16,7 @@ public class DirectHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.pipeline().remove(this);
+        log.debug("channel: {} connect success. This handler will be removed soon", ctx.channel());
         promise.setSuccess(ctx.channel());
     }
 

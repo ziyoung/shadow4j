@@ -10,31 +10,30 @@ import java.security.SecureRandom;
 public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
 
     private final ShadowCipher cipher;
-    private final byte[] salt;
-    private boolean cipherInit = false;
+    private boolean initCipherSalt = false;
 
     public ShadowStreamEncoder(ShadowConfig config) {
-        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName());
-        this.salt = new byte[cipher.saltSize()];
-    }
-
-    private void init() throws Exception {
-        new SecureRandom().nextBytes(salt);
-        cipher.initEncrypt(salt);
+        cipher = new MetaCipher(config.getPassword(), config.getCipherName());
     }
 
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, ShadowStream shadowStream, ByteBuf byteBuf) throws Exception {
-        if (!cipherInit) {
-            init();
-            cipherInit = true;
+    protected void encode(ChannelHandlerContext ctx, ShadowStream shadowStream, ByteBuf byteBuf) throws Exception {
+        ShadowUtils.checkShadowStream(shadowStream);
+        if (!initCipherSalt) {
+            if (!(shadowStream instanceof ShadowAddress)) {
+                throw new EncoderException("salt is sent with ShadowAddress");
+            }
+
+            initCipherSalt = true;
+            int size = cipher.saltSize();
+            byte[] salt = new byte[size];
+            new SecureRandom().nextBytes(salt);
+            cipher.initEncrypt(salt);
+            byteBuf.writeBytes(salt);
         }
+
         byte[] data = shadowStream.getData();
-        int size = data == null ? 0 : data.length;
-        if (size == 0 || size > ShadowStream.MAX_PAYLOAD_LENGTH) {
-            throw new EncoderException("fail to decode stream: invalid data size " + size);
-        }
-        byteBuf.writeBytes(salt);
+        int size = data.length;
         byte[] lengthBytes = ShadowUtils.intToShortBytes(size);
         byteBuf.writeBytes(cipher.encrypt(lengthBytes));
         byteBuf.writeBytes(cipher.encrypt(data));

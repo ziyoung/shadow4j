@@ -35,14 +35,8 @@ public class Main {
     private static CommandLine commandLine(String[] args) throws ParseException {
         CommandLineParser parser = new DefaultParser();
 
-        options.addOption("verbose", false, "verbose mode");
         options.addOption("h", false, "help information");
-
-        Option socks = Option.builder("s")
-                .longOpt("socks")
-                .desc("SOCKS listen address")
-                .hasArg().build();
-        options.addOption(socks);
+        options.addOption("verbose", false, "verbose mode");
 
         Option c = Option.builder("c")
                 .longOpt("client-url")
@@ -50,11 +44,17 @@ public class Main {
                 .hasArg().build();
         options.addOption(c);
 
-        Option u = Option.builder("u")
-                .longOpt("udp-socks")
-                .desc("Enable UDP support for SOCKS")
-                .build();
-        options.addOption(u);
+        Option socks = Option.builder("s")
+                .longOpt("socks")
+                .desc("listen address")
+                .hasArg().build();
+        options.addOption(socks);
+
+//        Option u = Option.builder("u")
+//                .longOpt("udp-socks")
+//                .desc("Enable UDP support for SOCKS")
+//                .build();
+//        options.addOption(u);
 
         return parser.parse(options, args);
     }

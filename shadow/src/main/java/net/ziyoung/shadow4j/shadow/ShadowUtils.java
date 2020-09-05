@@ -3,6 +3,9 @@ package net.ziyoung.shadow4j.shadow;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.handler.codec.EncoderException;
+
+import java.util.Objects;
 
 public final class ShadowUtils {
 
@@ -17,6 +20,15 @@ public final class ShadowUtils {
             return Integer.parseInt(option.split(":")[1]);
         }
         return Integer.parseInt(option);
+    }
+
+    public static void checkShadowStream(ShadowStream stream) {
+        Objects.requireNonNull(stream);
+        byte[] data = stream.getData();
+        int size = data.length;
+        if (size > ShadowStream.MAX_PAYLOAD_LENGTH) {
+            throw new EncoderException("fail to decode stream: invalid data size " + size);
+        }
     }
 
     public static int shorBytesToInt(byte[] bytes) {

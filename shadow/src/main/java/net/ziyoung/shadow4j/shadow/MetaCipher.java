@@ -35,18 +35,22 @@ public class MetaCipher implements ShadowCipher {
     private Cipher curCipher;
 
     public MetaCipher(byte[] psk, String cipherName) {
-        if (!("aes".equals(cipherName) || "chacha20".equals(cipherName))) {
-            throw new IllegalArgumentException("invalid cipher name");
-        }
         this.psk = psk;
-        this.cipherName = cipherName;
+        this.cipherName = cipherName.toLowerCase();
         this.nonce = Arrays.copyOf(DEFAULT_NONCE, DEFAULT_NONCE.length);
+        this.validCipherName();
         this.validateKey();
     }
 
     public MetaCipher(byte[] psk, String cipherName, boolean increaseNonce) {
         this(psk, cipherName);
         this.increaseNonce = increaseNonce;
+    }
+
+    private void validCipherName() {
+        if (!(cipherName.contains("aes") || cipherName.contains("chacha20"))) {
+            throw new IllegalStateException("invalid cipher name");
+        }
     }
 
     private void validateKey() {
@@ -87,7 +91,7 @@ public class MetaCipher implements ShadowCipher {
     }
 
     private boolean isAes() {
-        return "aes".equalsIgnoreCase(cipherName);
+        return cipherName.contains("aes");
     }
 
     public void updateNonceAndCipher() throws Exception {

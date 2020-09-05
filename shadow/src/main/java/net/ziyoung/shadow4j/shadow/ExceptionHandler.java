@@ -11,6 +11,7 @@ public class ExceptionHandler extends ChannelDuplexHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.error("exception", cause);
         ShadowUtils.closeChannelOnFlush(ctx.channel());
     }
 

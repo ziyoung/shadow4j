@@ -18,44 +18,56 @@ public class ShadowStreamEncoderTest {
     @Test
     @DisplayName("test encoding shadow stream")
     void testStreamEncoded() {
-        ShadowStream shadowStream = new ShadowStream(PLAINTEXT);
+        ShadowAddress address = Assertions.assertDoesNotThrow(() -> ShadowAddress.valueOf("example.com", 3000));
+        ShadowStream message = new ShadowStream(PLAINTEXT);
         ShadowConfig[] configs = new ShadowConfig[]{AES_CONFIG, CHACHA_20_CONFIG};
         for (ShadowConfig config : configs) {
             EmbeddedChannel channel = new EmbeddedChannel(new ShadowStreamEncoder(config));
-            Assertions.assertTrue(channel.writeOutbound(shadowStream));
+            Assertions.assertTrue(channel.writeOutbound(address, message));
             Assertions.assertTrue(channel.finish());
 
             ByteBuf byteBuf = channel.readOutbound();
             ShadowCipher cipher = new MetaCipher(config.getPassword(), config.getCipherName());
+
+            // encode address
             {
                 int size = cipher.saltSize();
                 byte[] bytes = new byte[size];
                 byteBuf.readBytes(bytes);
                 Assertions.assertDoesNotThrow(() -> cipher.initEncrypt(bytes));
             }
+            testEncodeLength(cipher, address, byteBuf);
+            testEncodeData(cipher, address, byteBuf);
+            byteBuf.release();
 
-            {
-                int size = 2 + MetaCipher.TAG_SIZE;
-                byte[] bytes = new byte[size];
-                byteBuf.readBytes(bytes);
-                int length = PLAINTEXT.length;
-                byte[] lengthBytes = ShadowUtils.intToShortBytes(length);
-                byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(lengthBytes));
-                Assertions.assertArrayEquals(ciphertext, bytes);
-            }
-
-            {
-                int size = PLAINTEXT.length + MetaCipher.TAG_SIZE;
-                byte[] bytes = new byte[size];
-                byteBuf.readBytes(bytes);
-                byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(PLAINTEXT));
-                Assertions.assertArrayEquals(ciphertext, bytes);
-            }
+            // read again and update byteBuf
+            byteBuf = channel.readOutbound();
+            // encode message
+            testEncodeLength(cipher, message, byteBuf);
+            testEncodeData(cipher, message, byteBuf);
 
             Assertions.assertEquals(0, byteBuf.readableBytes());
             byteBuf.release();
             Assertions.assertNull(channel.readOutbound());
         }
+    }
+
+    private void testEncodeLength(ShadowCipher cipher, ShadowStream stream, ByteBuf byteBuf) {
+        int size = 2 + MetaCipher.TAG_SIZE;
+        byte[] bytes = new byte[size];
+        byteBuf.readBytes(bytes);
+        int length = stream.getData().length;
+        byte[] lengthBytes = ShadowUtils.intToShortBytes(length);
+        byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(lengthBytes));
+        Assertions.assertArrayEquals(ciphertext, bytes);
+    }
+
+    private void testEncodeData(ShadowCipher cipher, ShadowStream stream, ByteBuf byteBuf) {
+        int size = stream.getData().length + MetaCipher.TAG_SIZE;
+        byte[] bytes = new byte[size];
+        byteBuf.readBytes(bytes);
+        byte[] ciphertext = Assertions.assertDoesNotThrow(() -> cipher.encrypt(stream.getData()));
+        Assertions.assertArrayEquals(ciphertext, bytes);
     }
 
 }
