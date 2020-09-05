@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class ShadowAddress extends ShadowStream {
 
-    private final static String INVALID_ADDRESS = "invalid socks address";
+    private final static String INVALID_ADDRESS = "invalid shadow address";
 
     public static ShadowAddress valueOf(URI uri) throws Exception {
         return valueOf(uri.getHost(), uri.getPort());

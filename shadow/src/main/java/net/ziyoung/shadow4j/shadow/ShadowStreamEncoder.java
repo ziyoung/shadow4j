@@ -9,24 +9,34 @@ import java.security.SecureRandom;
 
 public class ShadowStreamEncoder extends MessageToByteEncoder<ShadowStream> {
 
-    protected static void encodeShadowStream(ShadowCipher cipher, ShadowStream shadowStream, ByteBuf byteBuf) throws Exception {
+    private final ShadowCipher cipher;
+    private boolean initCipherSalt = false;
+
+    public ShadowStreamEncoder(ShadowConfig config) {
+        cipher = new MetaCipher(config.getPassword(), config.getCipherName());
+    }
+
+    @Override
+    protected void encode(ChannelHandlerContext ctx, ShadowStream shadowStream, ByteBuf byteBuf) throws Exception {
+        ShadowUtils.checkShadowStream(shadowStream);
+        if (!initCipherSalt) {
+            if (!(shadowStream instanceof ShadowAddress)) {
+                throw new EncoderException("salt is sent with ShadowAddress");
+            }
+
+            initCipherSalt = true;
+            int size = cipher.saltSize();
+            byte[] salt = new byte[size];
+            new SecureRandom().nextBytes(salt);
+            cipher.initEncrypt(salt);
+            byteBuf.writeBytes(salt);
+        }
+
         byte[] data = shadowStream.getData();
         int size = data.length;
         byte[] lengthBytes = ShadowUtils.intToShortBytes(size);
         byteBuf.writeBytes(cipher.encrypt(lengthBytes));
         byteBuf.writeBytes(cipher.encrypt(data));
-    }
-
-    private final ShadowCipher cipher;
-
-    public ShadowStreamEncoder(ShadowCipher cipher) {
-        this.cipher = cipher;
-    }
-
-    @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, ShadowStream shadowStream, ByteBuf byteBuf) throws Exception {
-        ShadowUtils.checkShadowStream(shadowStream);
-        encodeShadowStream(cipher, shadowStream, byteBuf);
     }
 
 }

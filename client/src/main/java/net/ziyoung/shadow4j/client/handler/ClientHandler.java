@@ -58,7 +58,8 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
     private void connectServer(ChannelHandlerContext ctx, ShadowAddress address) {
         log.debug("start connect remote proxy server");
         ctx.pipeline().remove(Socks5CommandRequestDecoder.class);
-        ctx.pipeline().replace(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));
+        ctx.pipeline().addAfter(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));
+        ctx.pipeline().remove(this);
         ctx.fireChannelRead(address);
     }
 

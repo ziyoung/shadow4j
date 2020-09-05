@@ -24,7 +24,7 @@ public class ShadowStreamDecoderTest {
     void testStreamDecoded() {
         ShadowConfig[] configs = new ShadowConfig[]{AES_CONFIG, CHACHA_20_CONFIG};
         for (ShadowConfig config : configs) {
-            EmbeddedChannel channel = new EmbeddedChannel(new ShadowAddressDecoder(config));
+            EmbeddedChannel channel = new EmbeddedChannel(new ShadowStreamDecoder(config, true));
 
             ByteBuf[] byteBufTuple = Assertions.assertDoesNotThrow(() -> byteBufTuple(config));
             Assertions.assertEquals(2, byteBufTuple.length);

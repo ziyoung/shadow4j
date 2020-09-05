@@ -2,7 +2,6 @@ package net.ziyoung.shadow4j.shadow;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.ReplayingDecoder;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -17,11 +16,18 @@ import java.util.List;
 public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.State> {
 
     private final ShadowCipher cipher;
+    private final boolean isServerMode;
+    private boolean hasDecodeAddress;
     private int length;
 
-    public ShadowStreamDecoder(ShadowCipher cipher) {
-        super(State.READ_LENGTH);
-        this.cipher = cipher;
+    public ShadowStreamDecoder(ShadowConfig config, boolean isServerMode) {
+        super(State.READ_SALT);
+        this.cipher = new MetaCipher(config.getPassword(), config.getCipherName());
+        this.isServerMode = isServerMode;
+    }
+
+    public ShadowStreamDecoder(ShadowConfig config) {
+        this(config, false);
     }
 
     @Override
@@ -30,20 +36,32 @@ public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.St
         byte[] plaintext;
         try {
             switch (this.state()) {
+                case READ_SALT:
+                    int size = cipher.saltSize();
+                    byte[] salt = new byte[size];
+                    byteBuf.readBytes(salt);
+                    cipher.initDecrypt(salt);
+                    this.checkpoint(State.READ_LENGTH);
                 case READ_LENGTH:
                     bytes = new byte[MetaCipher.LENGTH_SIZE + MetaCipher.TAG_SIZE];
                     byteBuf.readBytes(bytes);
-                    log.debug("length bytes is {}", bytes);
                     plaintext = cipher.decrypt(bytes);
                     length = ShadowUtils.shorBytesToInt(plaintext) & ShadowStream.MAX_PAYLOAD_LENGTH;
-                    log.debug("length is {}", length);
                     this.checkpoint(State.READ_PAYLOAD);
-                    break;
                 case READ_PAYLOAD:
                     bytes = new byte[length + MetaCipher.TAG_SIZE];
                     byteBuf.readBytes(bytes);
                     plaintext = cipher.decrypt(bytes);
-                    list.add(new ShadowStream(plaintext));
+
+                    ShadowStream stream;
+                    if (isServerMode && !hasDecodeAddress) {
+                        stream = new ShadowAddress(plaintext);
+                        hasDecodeAddress = true;
+                    } else {
+                        stream = new ShadowStream(plaintext);
+                    }
+                    list.add(stream);
+
                     this.checkpoint(State.READ_LENGTH);
                     break;
                 case FAILURE:
@@ -61,6 +79,7 @@ public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.St
 
         ByteBuf byteBuf = ctx.alloc().buffer();
         byteBuf.writeBytes(cause.toString().getBytes(StandardCharsets.UTF_8));
+        // FIXME: HttpResponseEncoder conflicts with ShadowStreamRawEncoder
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -69,6 +88,7 @@ public class ShadowStreamDecoder extends ReplayingDecoder<ShadowStreamDecoder.St
     }
 
     enum State {
+        READ_SALT,
         READ_LENGTH,
         READ_PAYLOAD,
         FAILURE

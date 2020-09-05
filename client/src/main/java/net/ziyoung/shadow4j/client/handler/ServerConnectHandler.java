@@ -4,6 +4,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.socksx.v5.Socks5ServerEncoder;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import lombok.AllArgsConstructor;
@@ -35,7 +36,9 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<ShadowAddr
                         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
 
                         log.debug("start to add relay handler");
-                        ctx.pipeline().replace(ctx.name(), null, new RelayHandler(outboundChannel, false));
+                        ctx.pipeline().addAfter(ctx.name(), null, new RelayHandler(outboundChannel, false));
+                        ctx.pipeline().remove(Socks5ServerEncoder.class);
+                        ctx.pipeline().remove(ctx.name());
                         outboundChannel.pipeline().addLast(new RelayHandler(ctx.channel(), true));
                     } else {
                         log.error("send address error", future1.cause());
