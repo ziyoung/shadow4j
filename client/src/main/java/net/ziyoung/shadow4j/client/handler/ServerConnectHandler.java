@@ -28,7 +28,7 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<ShadowAddr
             if (future.isSuccess()) {
                 Channel outboundChannel = future.getNow();
                 log.debug("start to write address '{}' to server", address);
-                log.debug("channel is ==> {}", outboundChannel);
+
                 ChannelFuture responseFuture = outboundChannel.writeAndFlush(address);
                 responseFuture.addListener((ChannelFutureListener) future1 -> {
                     if (future1.isSuccess()) {
