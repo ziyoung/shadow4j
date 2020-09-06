@@ -1,5 +1,29 @@
-version: '3'
+version: "3"
 
 services:
-  caddy:
-    image: caddy:2.0.0
+  ss-local:
+    image: test-essential
+    command: go-shadowsocks2 -c 'ss://AEAD_CHACHA20_POLY1305:123456@127.0.0.1:8488' -verbose -socks :2048
+    ports:
+      - "8488:8488"
+      - "2048:2048"
+
+  ss-local-link:
+    image: test-essential
+    command: go-shadowsocks2 -c 'ss://AEAD_CHACHA20_POLY1305:123456@ss-server:8488' -verbose -socks :2048
+    depends_on:
+      - ss-server
+    ports:
+      - "2048:2048"
+
+  ss-server:
+    image: test-essential
+    command: go-shadowsocks2 -s 'ss://AEAD_CHACHA20_POLY1305:123456@:8488' -verbose
+    ports:
+      - "8488:8488"
+
+  socks5-dump:
+    image: test-essential
+    command: socks5-dump -port 2048 -url http://baidu.com -verbose
+    ports:
+      - "2048:2048"

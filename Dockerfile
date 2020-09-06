@@ -4,6 +4,8 @@ ENV GO111MODULE on
 ENV GOPROXY https://goproxy.cn
 WORKDIR /test-essential
 
+COPY ./docker-entrypoint.sh .
+
 RUN apk upgrade && \
     apk add git && \
     go get github.com/shadowsocks/go-shadowsocks2 && \
@@ -14,9 +16,8 @@ RUN apk upgrade && \
 FROM alpine:3.12 AS dist
 
 RUN apk upgrade && \
-    apk add tzdata && \
     rm -rf /var/cache/apk/*
 
-COPY --from=builder /test-essential /usr/bin
+COPY --from=builder /test-essential/ /usr/bin
 
-ENTRYPOINT ["/usr/bin"]
+ENTRYPOINT ["sh","/usr/bin/docker-entrypoint.sh"]
