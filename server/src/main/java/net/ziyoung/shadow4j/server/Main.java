@@ -1,7 +1,11 @@
 package net.ziyoung.shadow4j.server;
 
+import lombok.extern.slf4j.Slf4j;
+import net.ziyoung.shadow4j.shadow.ShadowConfig;
+import net.ziyoung.shadow4j.shadow.ShadowUtil;
 import org.apache.commons.cli.*;
 
+@Slf4j
 public class Main {
 
     private static final Options options = new Options();
@@ -15,7 +19,10 @@ public class Main {
             return;
         }
 
-        new Server(null).start();
+        ServerConfig config = readServerConfig(commandLine);
+        log.info("server config: {} ", config);
+
+        new Server(config).start();
     }
 
     private static CommandLine commandLine(String[] args) throws ParseException {
@@ -34,4 +41,16 @@ public class Main {
     }
 
 
+    private static ServerConfig readServerConfig(CommandLine commandLine) throws Exception {
+        boolean verboseMode = commandLine.hasOption("verbose");
+        String url = commandLine.getOptionValue("s").trim();
+        ShadowConfig shadowConfig = ShadowUtil.parseClientUrl(url);
+        int port = shadowConfig.getServer().getPort();
+
+        return ServerConfig.builder()
+                .shadowConfig(shadowConfig)
+                .verboseMode(verboseMode)
+                .port(port)
+                .build();
+    }
 }

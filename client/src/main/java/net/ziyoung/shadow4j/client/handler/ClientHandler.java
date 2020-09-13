@@ -7,7 +7,7 @@ import io.netty.handler.codec.socksx.v5.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.ziyoung.shadow4j.client.ClientConfig;
-import net.ziyoung.shadow4j.shadow.ShadowUtils;
+import net.ziyoung.shadow4j.shadow.ShadowUtil;
 import net.ziyoung.shadow4j.shadow.ShadowAddress;
 
 import java.net.InetSocketAddress;
@@ -30,11 +30,11 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
             ShadowAddress address = ShadowAddress.valueOf(request.dstAddr(), request.dstPort());
             if (type == Socks5CommandType.CONNECT) {
                 ctx.write(new DefaultSocks5CommandResponse(Socks5CommandStatus.SUCCESS, Socks5AddressType.IPv4));
-                connectServer(ctx, address);
+                connect(ctx, address);
             } else if (type == Socks5CommandType.UDP_ASSOCIATE) {
                 if (!config.isUnpAssociate()) {
                     log.warn("unp associate is not supported, so this channel will be closed");
-                    ShadowUtils.closeChannelOnFlush(ctx.channel());
+                    ShadowUtil.closeChannelOnFlush(ctx.channel());
                 } else {
                     InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
                     log.debug("unp associate is active and localAddress is {}", localAddress);
@@ -43,7 +43,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
                             Socks5AddressType.IPv4,
                             localAddress.getHostName(),
                             localAddress.getPort()));
-                    connectServer(ctx, address);
+                    connect(ctx, address);
                 }
             } else {
                 log.warn("unsupported command type {}", type);
@@ -55,7 +55,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<SocksMessage> {
         }
     }
 
-    private void connectServer(ChannelHandlerContext ctx, ShadowAddress address) {
+    private void connect(ChannelHandlerContext ctx, ShadowAddress address) {
         log.debug("start connect remote proxy server");
         ctx.pipeline().remove(Socks5CommandRequestDecoder.class);
         ctx.pipeline().addAfter(ctx.name(), null, new ServerConnectHandler(config.getShadowConfig()));

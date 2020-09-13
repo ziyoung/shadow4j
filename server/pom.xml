@@ -30,7 +30,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>run-client</id>
+                        <id>run-server</id>
                         <goals>
                             <goal>java</goal>
                         </goals>

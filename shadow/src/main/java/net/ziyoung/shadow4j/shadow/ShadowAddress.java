@@ -46,7 +46,7 @@ public class ShadowAddress extends ShadowStream {
             System.arraycopy(address, 0, data, 2, address.length);
         }
 
-        byte[] bytes = ShadowUtils.intToShortBytes(port);
+        byte[] bytes = ShadowUtil.intToShortBytes(port);
         data[data.length - 2] = bytes[0];
         data[data.length - 1] = bytes[1];
 
@@ -57,27 +57,46 @@ public class ShadowAddress extends ShadowStream {
         super(data);
     }
 
-    @Override
-    public String toString() {
+    public String getHost() {
         byte[] data = getData();
-        int length = data.length;
-        if (length < 3) {
-            return INVALID_ADDRESS;
+        if (data == null || data.length == 0) {
+            return null;
         }
 
+        int length = data.length;
         boolean isDomainName = data[0] == Type.DomainName.code;
         int from = isDomainName ? 2 : 1;
-        int port = (data[length - 2] << 8) + Byte.toUnsignedInt(data[length - 1]);
         byte[] address = Arrays.copyOfRange(data, from, length - 2);
         if (isDomainName) {
-            return new String(address) + ":" + port;
+            return new String(address);
         } else {
             try {
                 InetAddress inetAddress = InetAddress.getByAddress(address);
-                return inetAddress.getHostAddress() + ":" + port;
+                return inetAddress.getHostAddress();
             } catch (Exception exception) {
-                return INVALID_ADDRESS;
+                return null;
             }
+        }
+    }
+
+    public int getPort() {
+        byte[] data = getData();
+        if (data == null || data.length == 0) {
+            return -1;
+        }
+
+        int length = data.length;
+        return (data[length - 2] << 8) + Byte.toUnsignedInt(data[length - 1]);
+    }
+
+    @Override
+    public String toString() {
+        String host = getHost();
+        int port = getPort();
+        if (host == null || port == -1) {
+            return INVALID_ADDRESS;
+        } else {
+            return host + ":" + port;
         }
     }
 

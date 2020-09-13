@@ -9,8 +9,8 @@ public class ShadowStreamCodec extends CombinedChannelDuplexHandler<ShadowStream
     }
 
 
-    public ShadowStreamCodec(ShadowConfig config, boolean isClientMode) {
-        super(new ShadowStreamDecoder(config, isClientMode), new ShadowStreamEncoder(config));
+    public ShadowStreamCodec(ShadowConfig config, boolean isServerMode) {
+        super(new ShadowStreamDecoder(config, isServerMode), new ShadowStreamEncoder(config, isServerMode));
     }
 
 }
