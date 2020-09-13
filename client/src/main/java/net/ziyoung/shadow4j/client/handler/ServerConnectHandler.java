@@ -42,11 +42,11 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<ShadowAddr
                         outboundChannel.pipeline().addLast(new RelayHandler(ctx.channel(), true));
                     } else {
                         log.error("send address error", future1.cause());
-                        ShadowUtils.closeChannelOnFlush(ctx.channel());
+                        ShadowUtil.closeChannelOnFlush(ctx.channel());
                     }
                 });
             } else {
-                ShadowUtils.closeChannelOnFlush(ctx.channel());
+                ShadowUtil.closeChannelOnFlush(ctx.channel());
             }
         });
 
@@ -63,7 +63,7 @@ public class ServerConnectHandler extends SimpleChannelInboundHandler<ShadowAddr
                         log.info("proxy {} <-> {} <-> {}", future.channel().localAddress(), server, address);
                     } else {
                         log.error("unable to connect server {}", server);
-                        ShadowUtils.closeChannelOnFlush(inboundChannel);
+                        ShadowUtil.closeChannelOnFlush(inboundChannel);
                     }
                 });
     }

@@ -13,7 +13,7 @@ public class ChannelIdleHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
-            ShadowUtils.closeChannelOnFlush(ctx.channel());
+            ShadowUtil.closeChannelOnFlush(ctx.channel());
         } else {
             ctx.fireUserEventTriggered(evt);
         }

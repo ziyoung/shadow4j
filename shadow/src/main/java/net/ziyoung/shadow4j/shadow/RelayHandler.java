@@ -37,20 +37,21 @@ public class RelayHandler extends ChannelInboundHandlerAdapter {
                 outBoundChannel.writeAndFlush(new ShadowStream(bytes));
             }
         } else {
+            log.warn("message will be discarded {}", msg);
             ReferenceCountUtil.release(msg);
         }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ShadowUtils.closeChannelOnFlush(outBoundChannel);
+        ShadowUtil.closeChannelOnFlush(outBoundChannel);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error(ctx.channel().toString() + " error:", cause);
         ctx.close();
-        ShadowUtils.closeChannelOnFlush(outBoundChannel);
+        ShadowUtil.closeChannelOnFlush(outBoundChannel);
     }
 
 }

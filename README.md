@@ -24,5 +24,5 @@ A proxy server written in Java.
 
 为了测试整个程序运行是否正常，我写了一个 [socks5-dump](https://github.com/ziyoung/socks5-dump) 来发送 socks5 请求，通过对比 socks5-dump 的输出来验证程序。
 
-另外我将这些用来测试的程序都打包成 docker 镜像了，在开发时可以直接使用。使用了 docker 镜像，后续可以添加更多的自动化测试。
+另外将这些用来测试的程序都制作成一个 docker 镜像，在开发时可以直接使用。当然，后续可以利用这个了 docker 镜像，可以添加更多的自动化测试。
 

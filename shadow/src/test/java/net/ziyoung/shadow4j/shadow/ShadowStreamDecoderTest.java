@@ -56,13 +56,13 @@ public class ShadowStreamDecoderTest {
 
         // encrypt address
         int size = address.getData().length;
-        byte[] lengthBytes = ShadowUtils.intToShortBytes(size);
+        byte[] lengthBytes = ShadowUtil.intToShortBytes(size);
         addressByteBuf.writeBytes(cipher.encrypt(lengthBytes));
         addressByteBuf.writeBytes(cipher.encrypt(address.getData()));
 
         // encrypt stream
         size = stream.getData().length;
-        lengthBytes = ShadowUtils.intToShortBytes(size);
+        lengthBytes = ShadowUtil.intToShortBytes(size);
         streamByteBuf.writeBytes(cipher.encrypt(lengthBytes));
         streamByteBuf.writeBytes(cipher.encrypt(stream.getData()));
 

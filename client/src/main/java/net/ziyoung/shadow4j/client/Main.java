@@ -1,15 +1,11 @@
 package net.ziyoung.shadow4j.client;
 
 import lombok.extern.slf4j.Slf4j;
-import net.ziyoung.shadow4j.shadow.KdUtil;
-import net.ziyoung.shadow4j.shadow.MetaCipher;
 import net.ziyoung.shadow4j.shadow.ShadowConfig;
-import net.ziyoung.shadow4j.shadow.ShadowUtils;
+import net.ziyoung.shadow4j.shadow.ShadowUtil;
 import org.apache.commons.cli.*;
 
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 public class Main {
@@ -27,7 +23,7 @@ public class Main {
         }
 
         ClientConfig clientConfig = readClientConfig(commandLine);
-        log.info("client clientConfig: {} ", clientConfig.toString());
+        log.info("client clientConfig: {} ", clientConfig);
 
         new Client(clientConfig).start();
     }
@@ -62,44 +58,13 @@ public class Main {
     private static ClientConfig readClientConfig(CommandLine commandLine) throws Exception {
         boolean verboseMode = commandLine.hasOption("verbose");
         String url = commandLine.getOptionValue("c").trim();
-        ShadowConfig shadowConfig = parseClientUrl(url);
-        int port = ShadowUtils.parseSocksOption(commandLine.getOptionValue("s").trim());
+        ShadowConfig shadowConfig = ShadowUtil.parseClientUrl(url);
+        int port = ShadowUtil.parseSocksOption(commandLine.getOptionValue("s").trim());
 
         return ClientConfig.builder()
                 .verboseMode(verboseMode)
                 .shadowConfig(shadowConfig)
                 .socks(new InetSocketAddress("127.0.0.1", port)).build();
-    }
-
-    private static ShadowConfig parseClientUrl(String url) throws Exception {
-        if (!url.startsWith("ss://")) {
-            url = "ss://" + url;
-        }
-        URI uri = new URI(url);
-        String userInfo = uri.getUserInfo();
-        String host = uri.getHost();
-        int port = uri.getPort();
-        if (userInfo == null || host == null || port == -1) {
-            throw new IllegalArgumentException("invalid url");
-        }
-
-        String[] strings = userInfo.split(":");
-        if (strings.length != 2) {
-            throw new IllegalArgumentException("invalid authority: cipher and password is required");
-        }
-
-        String cipher = strings[0].toLowerCase();
-        byte[] password = strings[1].getBytes(StandardCharsets.UTF_8);
-        if (!MetaCipher.CIPHER_CONFIG.containsKey(cipher)) {
-            throw new IllegalArgumentException("invalid cipher name");
-        }
-        if (password.length == 0) {
-            throw new IllegalArgumentException("password is required");
-        }
-        int size = MetaCipher.CIPHER_CONFIG.get(cipher);
-        byte[] key = KdUtil.computeKdf(password, size);
-
-        return new ShadowConfig(new InetSocketAddress(host, port), strings[0], key);
     }
 
 }
